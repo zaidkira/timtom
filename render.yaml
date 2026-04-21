@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: distribution-management-system
+    env: node
+    plan: free
+    buildCommand: pnpm install --frozen-lockfile && pnpm run db:setup && pnpm build
+    startCommand: pnpm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false # Set this in Render dashboard
+      - key: SESSION_SECRET
+        generateValue: true
+    autoDeploy: true
