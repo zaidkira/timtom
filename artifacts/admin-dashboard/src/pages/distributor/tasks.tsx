@@ -2,7 +2,7 @@ import { useGetTasks, useUpdateTask, useCreateDelivery } from "@workspace/api-cl
 import { useAuth } from "@/hooks/use-auth";
 import { formatCurrency } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Navigation, Camera, CheckCircle2, XCircle } from "lucide-react";
+import { Navigation, Camera, CheckCircle2 } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -10,19 +10,18 @@ import { useToast } from "@/hooks/use-toast";
 
 export default function DistributorTasks() {
   const { user } = useAuth();
-  // Filter tasks for current distributor
   const { data: tasks, isLoading } = useGetTasks({ distributorId: user?.id });
   const [selectedTask, setSelectedTask] = useState<any>(null);
-  
-  if (isLoading) return <div className="p-8 text-center">جاري التحميل...</div>;
 
-  const pendingTasks = tasks?.filter((t: any) => t.status === 'pending' || t.status === 'in_progress') || [];
-  const completedTasks = tasks?.filter((t: any) => t.status === 'completed' || t.status === 'failed') || [];
+  if (isLoading) return <div className="p-8 text-center">جارٍ التحميل...</div>;
+
+  const pendingTasks = tasks?.filter((t: any) => t.status === "pending" || t.status === "in_progress") || [];
+  const completedTasks = tasks?.filter((t: any) => t.status === "completed" || t.status === "failed") || [];
 
   return (
-    <div className="space-y-6 pt-4 pb-24">
+    <div dir="rtl" className="space-y-6 pt-4 pb-24">
       <h2 className="text-2xl font-display font-bold px-2">المهام الحالية</h2>
-      
+
       {pendingTasks.length === 0 ? (
         <div className="bg-white rounded-3xl p-8 text-center shadow-sm border border-slate-100">
           <div className="w-20 h-20 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -35,15 +34,15 @@ export default function DistributorTasks() {
         <div className="space-y-4">
           {pendingTasks.map((task: any) => (
             <div key={task.id} className="bg-white rounded-3xl p-5 shadow-lg shadow-slate-200/50 border border-slate-100 relative overflow-hidden">
-              <div className={`absolute top-0 right-0 w-2 h-full ${task.status === 'in_progress' ? 'bg-blue-500' : 'bg-amber-500'}`} />
-              
+              <div className={`absolute top-0 right-0 w-2 h-full ${task.status === "in_progress" ? "bg-blue-500" : "bg-amber-500"}`} />
+
               <div className="flex justify-between items-start mb-3">
                 <h3 className="font-bold text-lg text-slate-900">{task.storeName}</h3>
-                <Badge variant={task.status === 'in_progress' ? "default" : "warning"} className="text-[10px]">
-                  {task.status === 'in_progress' ? "جاري التنفيذ" : "قيد الانتظار"}
+                <Badge variant={task.status === "in_progress" ? "default" : "warning"} className="text-[10px]">
+                  {task.status === "in_progress" ? "جاري التنفيذ" : "قيد الانتظار"}
                 </Badge>
               </div>
-              
+
               <div className="bg-slate-50 rounded-xl p-3 mb-4">
                 <p className="text-sm font-bold text-slate-700 mb-2 border-b border-slate-200 pb-2">الطلبية:</p>
                 <ul className="space-y-1">
@@ -59,16 +58,16 @@ export default function DistributorTasks() {
                   <span className="font-bold text-emerald-600">{formatCurrency(task.totalAmount)}</span>
                 </div>
               </div>
-              
+
               <div className="flex gap-2">
-                <a 
+                <a
                   href={`google.navigation:q=${task.storeLatitude},${task.storeLongitude}`}
                   className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-3 rounded-xl flex items-center justify-center gap-2 font-bold text-sm transition-colors"
                 >
                   <Navigation className="w-4 h-4" />
                   المسار
                 </a>
-                <button 
+                <button
                   onClick={() => setSelectedTask(task)}
                   className="flex-1 bg-primary hover:bg-primary/90 text-white py-3 rounded-xl flex items-center justify-center gap-2 font-bold text-sm shadow-lg shadow-primary/30 transition-all"
                 >
@@ -91,8 +90,8 @@ export default function DistributorTasks() {
                   <h4 className="font-bold text-slate-900">{task.storeName}</h4>
                   <p className="text-xs text-slate-500">{formatCurrency(task.totalAmount)}</p>
                 </div>
-                <Badge variant={task.status === 'completed' ? "success" : "destructive"}>
-                  {task.status === 'completed' ? "مكتملة" : "فشلت"}
+                <Badge variant={task.status === "completed" ? "success" : "destructive"}>
+                  {task.status === "completed" ? "مكتملة" : "فشلت"}
                 </Badge>
               </div>
             ))}
@@ -110,7 +109,7 @@ function DeliveryModal({ task, onClose }: { task: any, onClose: () => void }) {
   const { toast } = useToast();
   const deliveryMutation = useCreateDelivery();
   const updateTaskMutation = useUpdateTask();
-  
+
   const [amountCollected, setAmountCollected] = useState(task.totalAmount.toString());
   const [photoBase64, setPhotoBase64] = useState<string>("");
 
@@ -127,22 +126,20 @@ function DeliveryModal({ task, onClose }: { task: any, onClose: () => void }) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // First update task status
-    updateTaskMutation.mutate({ id: task.id, data: { status: 'completed' } }, {
+
+    updateTaskMutation.mutate({ id: task.id, data: { status: "completed" } }, {
       onSuccess: () => {
-        // Then create delivery record for admin review
         deliveryMutation.mutate({
           data: {
             taskId: task.id,
             amountCollected: Number(amountCollected),
-            latitude: task.storeLatitude, // Should be current location in real app
+            latitude: task.storeLatitude,
             longitude: task.storeLongitude,
-            photoUrl: photoBase64 || "https://images.unsplash.com/photo-1620803554446-4131ee68ea82?w=400&h=300&fit=crop" // Fallback mock image
+            photoUrl: photoBase64 || "https://images.unsplash.com/photo-1620803554446-4131ee68ea82?w=400&h=300&fit=crop"
           }
         }, {
           onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+            queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
             toast({ title: "تم تسجيل التسليم بنجاح" });
             onClose();
           }
@@ -158,24 +155,24 @@ function DeliveryModal({ task, onClose }: { task: any, onClose: () => void }) {
           <p className="text-sm font-semibold mb-1">المبلغ الإجمالي للمهمة</p>
           <p className="text-3xl font-bold">{formatCurrency(task.totalAmount)}</p>
         </div>
-        
+
         <div className="space-y-2">
           <label className="text-sm font-bold block">المبلغ المحصل فعلياً</label>
-          <input 
-            type="number" 
+          <input
+            type="number"
             value={amountCollected}
             onChange={e => setAmountCollected(e.target.value)}
-            required 
-            className="w-full p-4 text-xl rounded-xl border-2 border-slate-200 focus:border-primary text-center font-bold outline-none" 
+            required
+            className="w-full p-4 text-xl rounded-xl border-2 border-slate-200 focus:border-primary text-center font-bold outline-none"
           />
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-bold block">صورة الإيصال / التسليم (اختياري)</label>
+          <label className="text-sm font-bold block">صورة الإيصال أو التسليم (اختياري)</label>
           <label className="border-2 border-dashed border-slate-300 rounded-xl p-8 flex flex-col items-center justify-center text-slate-500 bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors overflow-hidden relative">
             <input type="file" accept="image/*" onChange={handlePhotoSelect} className="hidden" />
             {photoBase64 ? (
-              <img src={photoBase64} alt="تم التقاط الصورة" className="absolute inset-0 w-full h-full object-cover" />
+              <img src={photoBase64} alt="صورة التسليم" className="absolute inset-0 w-full h-full object-cover" />
             ) : (
               <>
                 <Camera className="w-8 h-8 mb-2" />
