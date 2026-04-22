@@ -123,24 +123,28 @@ export default function DistributorMap() {
       L.marker(userPosition, { icon: userIcon }).bindPopup("أنت هنا").addTo(layer);
 
       if (activeTask) {
-        const tLat = parseFloat(activeTask.storeLatitude);
-        const tLng = parseFloat(activeTask.storeLongitude);
+        const tLat = parseFloat(String(activeTask.storeLatitude));
+        const tLng = parseFloat(String(activeTask.storeLongitude));
         if (!isNaN(tLat) && !isNaN(tLng) && tLat !== 0) {
           L.polyline([userPosition, [tLat, tLng]], { color: "#3b82f6", weight: 4, dashArray: "10, 15" }).addTo(layer);
           
           // Auto-zoom only on first discovery of target
-          if (!map._initialZoomDone) {
+          const mapWithFlag = map as any;
+          if (!mapWithFlag._initialZoomDone) {
             map.fitBounds(L.latLngBounds([userPosition, [tLat, tLng]]), { padding: [70, 70] });
-            map._initialZoomDone = true;
+            mapWithFlag._initialZoomDone = true;
           }
         }
       }
-    } else if (activeTask && !map._initialZoomDone) {
-        const tLat = parseFloat(activeTask.storeLatitude);
-        const tLng = parseFloat(activeTask.storeLongitude);
-        if (!isNaN(tLat) && !isNaN(tLng) && tLat !== 0) {
-            map.setView([tLat, tLng], 15);
-            map._initialZoomDone = true;
+    } else if (activeTask) {
+        const mapWithFlag = map as any;
+        if (!mapWithFlag._initialZoomDone) {
+            const tLat = parseFloat(String(activeTask.storeLatitude));
+            const tLng = parseFloat(String(activeTask.storeLongitude));
+            if (!isNaN(tLat) && !isNaN(tLng) && tLat !== 0) {
+                map.setView([tLat, tLng], 15);
+                mapWithFlag._initialZoomDone = true;
+            }
         }
     }
   }, [locations, tasks, userPosition, isLocationsLoading, activeTask]);
