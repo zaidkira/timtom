@@ -7,8 +7,29 @@ import "leaflet/dist/leaflet.css";
 
 const ALGIERS_CENTER: [number, number] = [36.7525, 3.042];
 
-function RecenterOnUser({ position }: { position: [number, number] | null }) {
+function MapController({ position }: { position: [number, number] | null }) {
   const map = useMap();
+
+  useEffect(() => {
+    // Crucial for Leaflet to work in containers that might have changed size
+    const timer = setTimeout(() => {
+      map.invalidateSize();
+    }, 500);
+
+    const resizeObserver = new ResizeObserver(() => {
+      map.invalidateSize();
+    });
+
+    const container = map.getContainer();
+    if (container) {
+      resizeObserver.observe(container);
+    }
+
+    return () => {
+      clearTimeout(timer);
+      resizeObserver.disconnect();
+    };
+  }, [map]);
 
   useEffect(() => {
     if (!position) return;
@@ -21,6 +42,18 @@ function RecenterOnUser({ position }: { position: [number, number] | null }) {
 export default function DistributorMap() {
   const [userPosition, setUserPosition] = useState<[number, number] | null>(null);
   const [tileStatus, setTileStatus] = useState<"idle" | "loading" | "loaded" | "error">("idle");
+  const [tileProviderIndex, setTileProviderIndex] = useState(0);
+
+  const tileProviders = [
+    {
+      url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+      attribution: "© OpenStreetMap contributors",
+    },
+    {
+      url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+      attribution: "© OpenStreetMap contributors © CARTO",
+    },
+  ];
 
   const { data, isLoading } = useQuery({
     queryKey: getGetMapLocationsQueryKey(),
@@ -86,14 +119,22 @@ export default function DistributorMap() {
       <div className="flex-1 min-h-[500px] bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden relative z-10">
         <MapContainer center={ALGIERS_CENTER} zoom={13} scrollWheelZoom className="h-full w-full">
           <TileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution="© OpenStreetMap contributors"
+            url={tileProviders[tileProviderIndex].url}
+            attribution={tileProviders[tileProviderIndex].attribution}
             eventHandlers={{
               loading: () => setTileStatus("loading"),
               load: () => setTileStatus("loaded"),
-              tileerror: () => setTileStatus("error"),
+              tileerror: () => {
+                if (tileProviderIndex < tileProviders.length - 1) {
+                  setTileProviderIndex(prev => prev + 1);
+                } else {
+                  setTileStatus("error");
+                }
+              },
             }}
           />
+          
+          <MapController position={userPosition} />
 
           {stores.map((s: any) => (
             <Marker key={s.id} position={[Number(s.latitude), Number(s.longitude)]} icon={storeIcon}>
@@ -111,7 +152,6 @@ export default function DistributorMap() {
             <>
               <Circle center={userPosition} radius={100} pathOptions={{ color: "#22c55e", fillColor: "#22c55e", fillOpacity: 0.3 }} />
               <Marker position={userPosition} icon={userIcon} />
-              <RecenterOnUser position={userPosition} />
             </>
           )}
         </MapContainer>

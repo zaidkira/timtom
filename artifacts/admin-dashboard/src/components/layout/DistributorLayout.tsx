@@ -18,6 +18,7 @@ function LocationTracker({ distributorId }: { distributorId: number }) {
         headers: {
           "Content-Type": "application/json"
         },
+        credentials: "include",
         body: JSON.stringify({
           latitude: pos.coords.latitude,
           longitude: pos.coords.longitude
@@ -88,7 +89,7 @@ export function DistributorLayout({ children }: { children: ReactNode }) {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 p-4 w-full max-w-lg mx-auto overflow-y-auto">
+      <main className="flex-1 p-4 w-full max-w-lg mx-auto overflow-y-auto flex flex-col min-h-0">
         {children}
       </main>
 
