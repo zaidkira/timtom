@@ -211,14 +211,43 @@ function StoreModal({ store, isOpen, onClose }: { store?: Store, isOpen: boolean
         </div>
         
         <div className="space-y-2">
-          <label className="text-sm font-bold">حدد الموقع على الخريطة</label>
-          <div className="h-64 rounded-xl overflow-hidden border border-slate-200">
-            <MapContainer center={position} zoom={12} scrollWheelZoom={true} className="h-full w-full">
+          <div className="flex justify-between items-center">
+            <label className="text-sm font-bold">حدد الموقع على الخريطة</label>
+            <button
+              type="button"
+              onClick={() => {
+                if (!navigator.geolocation) {
+                  toast({ title: "المتصفح لا يدعم تحديد الموقع", variant: "destructive" });
+                  return;
+                }
+                const btn = document.getElementById('get-admin-loc');
+                if (btn) btn.innerText = "جارٍ التحديد...";
+                navigator.geolocation.getCurrentPosition(
+                  (pos) => {
+                    setPosition([pos.coords.latitude, pos.coords.longitude]);
+                    toast({ title: "تم تحديد موقعك بنجاح" });
+                    if (btn) btn.innerText = "استخدام موقعي الحالي";
+                  },
+                  () => {
+                    toast({ title: "فشل تحديد الموقع", variant: "destructive" });
+                    if (btn) btn.innerText = "استخدام موقعي الحالي";
+                  }
+                );
+              }}
+              id="get-admin-loc"
+              className="text-xs font-bold text-primary flex items-center gap-1 hover:underline"
+            >
+              <MapPin className="w-3 h-3" />
+              استخدام موقعي الحالي
+            </button>
+          </div>
+          <div className="h-64 rounded-xl overflow-hidden border border-slate-200 relative">
+            <MapContainer center={position} zoom={13} scrollWheelZoom={true} className="h-full w-full">
               <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
               <LocationPicker pos={position} setPos={setPosition} />
             </MapContainer>
           </div>
-          <p className="text-xs text-slate-500">اضغط على الخريطة لتحديد موقع المحل بدقة</p>
+          <p className="text-xs text-slate-500">اضغط على الخريطة لتحديد الموقع أو استخدم زر التحديد التلقائي</p>
         </div>
 
         <button disabled={isPending} className="w-full bg-primary text-white p-3 rounded-xl font-bold hover:bg-primary/90 mt-4 disabled:opacity-50">
