@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useGetStores, useCreateStore, useUpdateStore, useDeleteStore, Store } from "@workspace/api-client-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { Modal } from "@/components/ui/modal";

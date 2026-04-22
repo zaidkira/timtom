@@ -1,6 +1,7 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getMapLocations, getGetMapLocationsQueryKey } from "@workspace/api-client-react";
+import { Badge } from "@/components/ui/badge";
 
 export default function MapPage() {
   const mapRef = useRef<HTMLDivElement>(null);
