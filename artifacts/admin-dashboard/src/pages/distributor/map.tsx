@@ -1,16 +1,14 @@
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getGetMapLocationsQueryKey, getMapLocations } from "@workspace/api-client-react";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
 
 const ALGIERS_CENTER: [number, number] = [36.7525, 3.042];
 
 export default function DistributorMap() {
   const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<L.Map | null>(null);
+  const mapInstanceRef = useRef<any>(null);
+  const leafletRef = useRef<any>(null);
   const [userPosition, setUserPosition] = useState<[number, number] | null>(null);
-  const [tileStatus, setTileStatus] = useState<"idle" | "loading" | "loaded" | "error">("idle");
 
   const { data, isLoading } = useQuery({
     queryKey: getGetMapLocationsQueryKey(),
@@ -23,84 +21,56 @@ export default function DistributorMap() {
     if (!("geolocation" in navigator)) return;
     navigator.geolocation.getCurrentPosition(
       (pos) => setUserPosition([pos.coords.latitude, pos.coords.longitude]),
-      () => {
-        console.log("Location access denied - centering on Algiers");
-        if (mapInstanceRef.current) {
-          mapInstanceRef.current.setView(ALGIERS_CENTER, 13);
-        }
-      }
+      () => console.log("Location access denied - centering on Algiers")
     );
   }, []);
 
-  // Initialize Map (Direct Leaflet - Same as Admin)
+  // Initialize Map (Identical to working Admin logic)
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current) return;
 
-    const map = L.map(mapRef.current, {
-      center: ALGIERS_CENTER,
-      zoom: 13,
-      zoomControl: false, // Move it to bottom right later
-    });
-    
-    mapInstanceRef.current = map;
+    let resizeObserver: ResizeObserver | null = null;
 
-    const tileProviders = [
-      {
-        url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    import("leaflet").then((L) => {
+      leafletRef.current = L;
+      const map = L.map(mapRef.current!).setView(ALGIERS_CENTER, 13);
+      mapInstanceRef.current = map;
+
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: "© OpenStreetMap contributors",
-      },
-      {
-        url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-        attribution: "© OpenStreetMap contributors © CARTO",
-      },
-    ];
+        maxZoom: 19,
+      }).addTo(map);
 
-    let currentProviderIndex = 0;
-    let tiles = L.tileLayer(tileProviders[0].url, {
-      attribution: tileProviders[0].attribution,
-    }).addTo(map);
+      map.whenReady(() => map.invalidateSize());
+      
+      // Force multiple size checks
+      setTimeout(() => map.invalidateSize(), 300);
+      setTimeout(() => map.invalidateSize(), 1000);
 
-    tiles.on("loading", () => setTileStatus("loading"));
-    tiles.on("load", () => setTileStatus("loaded"));
-    tiles.on("tileerror", () => {
-      if (currentProviderIndex < tileProviders.length - 1) {
-        currentProviderIndex++;
-        map.removeLayer(tiles);
-        tiles = L.tileLayer(tileProviders[currentProviderIndex].url, {
-          attribution: tileProviders[currentProviderIndex].attribution,
-        }).addTo(map);
-      } else {
-        setTileStatus("error");
-      }
+      resizeObserver = new ResizeObserver(() => {
+        map.invalidateSize();
+      });
+      resizeObserver.observe(mapRef.current!);
     });
-
-    L.control.zoom({ position: 'bottomright' }).addTo(map);
-
-    // Force size calculation - critical fix for white screen
-    const timer = setTimeout(() => map.invalidateSize(), 100);
-    const timer2 = setTimeout(() => map.invalidateSize(), 1000);
-
-    const resizeObserver = new ResizeObserver(() => map.invalidateSize());
-    resizeObserver.observe(mapRef.current);
 
     return () => {
-      clearTimeout(timer);
-      clearTimeout(timer2);
-      resizeObserver.disconnect();
+      if (resizeObserver) resizeObserver.disconnect();
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
       }
+      leafletRef.current = null;
     };
   }, []);
 
-  // Update Markers when data or userPosition changes
+  // Update Markers
   useEffect(() => {
     const map = mapInstanceRef.current;
-    if (!map || isLoading) return;
+    const L = leafletRef.current;
+    if (!map || !L || isLoading || !data) return;
 
-    // Clear existing markers (simple way: remove and re-add layers)
-    map.eachLayer((layer) => {
+    // Clear existing markers
+    map.eachLayer((layer: any) => {
       if (layer instanceof L.Marker || layer instanceof L.Circle) {
         map.removeLayer(layer);
       }
@@ -119,7 +89,7 @@ export default function DistributorMap() {
     });
 
     // Add Stores
-    if (data?.stores) {
+    if (data.stores) {
       data.stores.forEach((s: any) => {
         const lat = Number(s.latitude);
         const lng = Number(s.longitude);
@@ -131,11 +101,13 @@ export default function DistributorMap() {
       });
     }
 
-    // Add User and Recenter
+    // Add User and Center
     if (userPosition) {
       L.circle(userPosition, { radius: 100, color: "#22c55e", fillOpacity: 0.2 }).addTo(map);
       L.marker(userPosition, { icon: userIcon }).addTo(map);
       map.setView(userPosition, 14);
+    } else {
+      map.setView(ALGIERS_CENTER, 13);
     }
   }, [data, userPosition, isLoading]);
 
@@ -157,14 +129,8 @@ export default function DistributorMap() {
         </div>
       </div>
 
-      <div className="flex-1 min-h-[500px] bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden relative z-10">
-        <div ref={mapRef} className="h-full w-full" />
-
-        {tileStatus === "error" && (
-          <div className="absolute bottom-2 left-2 right-2 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-lg px-3 py-2 z-[1000]">
-            فشل تحميل بلاطات الخريطة. تحقق من الاتصال أو مانع الإعلانات.
-          </div>
-        )}
+      <div className="bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden">
+        <div ref={mapRef} style={{ height: "600px", width: "100%" }} />
       </div>
     </div>
   );
