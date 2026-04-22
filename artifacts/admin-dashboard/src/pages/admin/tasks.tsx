@@ -15,7 +15,10 @@ export default function Tasks() {
 
   const deleteTaskMutation = useMutation({
     mutationFn: async (taskId: number) => {
-      const response = await fetch(`/api/tasks/${taskId}`, { method: "DELETE" });
+      const response = await fetch(`/api/tasks/${taskId}`, { 
+        method: "DELETE",
+        credentials: "include"
+      });
       if (!response.ok) {
         const body = await response.json().catch(() => null);
         throw new Error(body?.message || "Failed to delete task");
