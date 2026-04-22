@@ -13,6 +13,7 @@ export default function DistributorMap() {
   const { data, isLoading } = useQuery({
     queryKey: getGetMapLocationsQueryKey(),
     queryFn: getMapLocations,
+    refetchInterval: 5000, // Refresh every 5 seconds
     retry: 1,
   });
 
@@ -21,11 +22,16 @@ export default function DistributorMap() {
     if (!("geolocation" in navigator)) return;
     navigator.geolocation.getCurrentPosition(
       (pos) => setUserPosition([pos.coords.latitude, pos.coords.longitude]),
-      () => console.log("Location access denied - centering on Algiers")
+      () => {
+        console.log("Location access denied - centering on Algiers");
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.setView(ALGIERS_CENTER, 13);
+        }
+      }
     );
   }, []);
 
-  // Initialize Map (Identical to working Admin logic)
+  // Initialize Map
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current) return;
 
@@ -43,7 +49,6 @@ export default function DistributorMap() {
 
       map.whenReady(() => map.invalidateSize());
       
-      // Force multiple size checks
       setTimeout(() => map.invalidateSize(), 300);
       setTimeout(() => map.invalidateSize(), 1000);
 
@@ -82,6 +87,12 @@ export default function DistributorMap() {
       className: "",
     });
 
+    const distIcon = L.divIcon({
+      html: '<div style="background:#22c55e;width:16px;height:16px;border-radius:50%;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3)"></div>',
+      iconSize: [16, 16],
+      className: "",
+    });
+
     const userIcon = L.divIcon({
       html: '<div style="background:#22c55e;width:12px;height:12px;border-radius:50%;border:2px solid white;box-shadow:0 0 0 4px rgba(34,197,94,0.3)"></div>',
       iconSize: [12, 12],
@@ -101,13 +112,23 @@ export default function DistributorMap() {
       });
     }
 
-    // Add User and Center
+    // Add Other Distributors
+    if (data.distributors) {
+      data.distributors.forEach((d: any) => {
+        const lat = Number(d.latitude);
+        const lng = Number(d.longitude);
+        if (Number.isFinite(lat) && Number.isFinite(lng)) {
+          L.marker([lat, lng], { icon: distIcon })
+            .bindPopup(`<div dir="rtl"><b>${d.name}</b><br>الحالة: ${d.isActive ? "نشط" : "غير نشط"}</div>`)
+            .addTo(map);
+        }
+      });
+    }
+
+    // Add User (Current Position)
     if (userPosition) {
       L.circle(userPosition, { radius: 100, color: "#22c55e", fillOpacity: 0.2 }).addTo(map);
       L.marker(userPosition, { icon: userIcon }).addTo(map);
-      map.setView(userPosition, 14);
-    } else {
-      map.setView(ALGIERS_CENTER, 13);
     }
   }, [data, userPosition, isLoading]);
 
@@ -116,7 +137,7 @@ export default function DistributorMap() {
   return (
     <div dir="rtl" className="h-full flex flex-col space-y-4">
       <div className="flex items-center justify-between px-2">
-        <h1 className="text-xl font-bold text-slate-800">خريطة المحلات</h1>
+        <h1 className="text-xl font-bold text-slate-800">خريطة المحلات والموزعين</h1>
         <div className="flex gap-4 text-xs">
           <div className="flex items-center gap-1">
             <div className="w-3 h-3 bg-blue-500 rounded-full" />
@@ -124,7 +145,7 @@ export default function DistributorMap() {
           </div>
           <div className="flex items-center gap-1">
             <div className="w-3 h-3 bg-green-500 rounded-full" />
-            <span className="text-slate-600">موقعك الآن</span>
+            <span className="text-slate-600">الموزعون</span>
           </div>
         </div>
       </div>

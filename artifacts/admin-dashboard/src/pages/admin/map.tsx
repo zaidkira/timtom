@@ -9,9 +9,10 @@ export default function MapPage() {
   const storesLayerRef = useRef<any>(null);
   const distributorsLayerRef = useRef<any>(null);
 
-  const { data } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: getGetMapLocationsQueryKey(),
     queryFn: getMapLocations,
+    refetchInterval: 5000, // Refresh every 5 seconds
   });
 
   useEffect(() => {
@@ -93,15 +94,21 @@ export default function MapPage() {
 
     const storesLayer = L.layerGroup();
     data.stores.forEach((s: any) => {
-      L.marker([s.latitude, s.longitude], { icon: storeIcon })
-        .bindPopup(`<div dir="rtl"><b>${s.name}</b><br>دين: ${s.debt?.toLocaleString("ar-DZ")} دج</div>`)
-        .addTo(storesLayer);
+      const lat = Number(s.latitude);
+      const lng = Number(s.longitude);
+      if (Number.isFinite(lat) && Number.isFinite(lng)) {
+        L.marker([lat, lng], { icon: storeIcon })
+          .bindPopup(`<div dir="rtl"><b>${s.name}</b><br>دين: ${s.debt?.toLocaleString("ar-DZ")} دج</div>`)
+          .addTo(storesLayer);
+      }
     });
 
     const distributorsLayer = L.layerGroup();
     data.distributors.forEach((d: any) => {
-      if (d.latitude && d.longitude) {
-        L.marker([d.latitude, d.longitude], { icon: distIcon })
+      const lat = Number(d.latitude);
+      const lng = Number(d.longitude);
+      if (Number.isFinite(lat) && Number.isFinite(lng)) {
+        L.marker([lat, lng], { icon: distIcon })
           .bindPopup(`<div dir="rtl"><b>${d.name}</b><br>الحالة: ${d.isActive ? "نشط" : "غير نشط"}</div>`)
           .addTo(distributorsLayer);
       }
