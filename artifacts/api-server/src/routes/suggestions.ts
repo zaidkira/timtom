@@ -97,4 +97,10 @@ router.put("/:id/reject", requireRole("admin"), async (req, res) => {
   res.json(suggestion);
 });
 
+router.delete("/:id", requireRole("admin"), async (req, res) => {
+  const id = Number.parseInt(String(req.params.id), 10);
+  await db.delete(storeSuggestionsTable).where(eq(storeSuggestionsTable.id, id));
+  res.json({ message: "Suggestion deleted" });
+});
+
 export default router;

@@ -3131,6 +3131,53 @@ export const useRejectStoreSuggestion = <TError = ErrorType<unknown>,
     }
     
 /**
+ * @summary Admin delete store suggestion
+ */
+export const getDeleteStoreSuggestionUrl = (id: number,) => {
+  return `/api/suggestions/${id}`
+}
+
+export const deleteStoreSuggestion = async (id: number, options?: RequestInit): Promise<{message: string}> => {
+  return customFetch<{message: string}>(getDeleteStoreSuggestionUrl(id),
+  {      
+    ...options,
+    method: 'DELETE'
+  }
+);}
+
+export const getDeleteStoreSuggestionMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteStoreSuggestion>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteStoreSuggestion>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['deleteStoreSuggestion'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteStoreSuggestion>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+          return  deleteStoreSuggestion(id,requestOptions)
+        }
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteStoreSuggestionMutationResult = NonNullable<Awaited<ReturnType<typeof deleteStoreSuggestion>>>
+    export type DeleteStoreSuggestionMutationError = ErrorType<unknown>
+
+export const useDeleteStoreSuggestion = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteStoreSuggestion>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteStoreSuggestion>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDeleteStoreSuggestionMutationOptions(options));
+    }
+    
+/**
  * @summary Get dashboard statistics
  */
 export const getGetDashboardStatsUrl = () => {

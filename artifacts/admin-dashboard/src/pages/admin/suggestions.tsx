@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getStoreSuggestions, approveStoreSuggestion, rejectStoreSuggestion, getGetStoreSuggestionsQueryKey } from "@workspace/api-client-react";
-import { CheckCircle, XCircle, MapPin, Camera } from "lucide-react";
+import { getStoreSuggestions, approveStoreSuggestion, rejectStoreSuggestion, deleteStoreSuggestion, getGetStoreSuggestionsQueryKey } from "@workspace/api-client-react";
+import { CheckCircle, XCircle, MapPin, Camera, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const statusLabels: Record<string, { label: string; color: string }> = {
@@ -30,6 +30,12 @@ export default function Suggestions() {
     onError: () => toast({ title: "خطأ", variant: "destructive" }),
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => deleteStoreSuggestion(id),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: getGetStoreSuggestionsQueryKey() }); toast({ title: "تم حذف الاقتراح" }); },
+    onError: () => toast({ title: "خطأ في الحذف", variant: "destructive" }),
+  });
+
   return (
     <div dir="rtl" className="p-6 space-y-6">
       <h1 className="text-2xl font-bold text-slate-800">اقتراحات المحلات</h1>
@@ -57,6 +63,13 @@ export default function Suggestions() {
                   <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusLabels[s.status].color}`}>
                     {statusLabels[s.status].label}
                   </span>
+                  <button 
+                    onClick={() => { if(confirm("هل أنت متأكد من حذف هذا الاقتراح؟")) deleteMutation.mutate(s.id); }}
+                    className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                    title="حذف الاقتراح"
+                  >
+                    <Trash2 size={18} />
+                  </button>
                 </div>
                 <div className="space-y-1.5 text-sm">
                   <p className="font-bold text-slate-800 text-base">{s.name}</p>
