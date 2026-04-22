@@ -68,22 +68,50 @@ function Router() {
         {user ? <Redirect to={user.role === 'admin' ? "/" : "/distributor"} /> : <Login />}
       </Route>
 
-      <Route path="/" component={() => <ProtectedRoute component={Dashboard} allowedRole="admin" />} />
-      <Route path="/distributors" component={() => <ProtectedRoute component={Distributors} allowedRole="admin" />} />
-      <Route path="/products" component={() => <ProtectedRoute component={Products} allowedRole="admin" />} />
-      <Route path="/stores" component={() => <ProtectedRoute component={Stores} allowedRole="admin" />} />
-      <Route path="/tasks" component={() => <ProtectedRoute component={Tasks} allowedRole="admin" />} />
-      <Route path="/deliveries" component={() => <ProtectedRoute component={Deliveries} allowedRole="admin" />} />
-      <Route path="/accounting" component={() => <ProtectedRoute component={Accounting} allowedRole="admin" />} />
-      <Route path="/map" component={() => <ProtectedRoute component={MapPage} allowedRole="admin" />} />
-      <Route path="/suggestions" component={() => <ProtectedRoute component={Suggestions} allowedRole="admin" />} />
+      <Route path="/">
+        <ProtectedRoute component={Dashboard} allowedRole="admin" />
+      </Route>
+      <Route path="/distributors">
+        <ProtectedRoute component={Distributors} allowedRole="admin" />
+      </Route>
+      <Route path="/products">
+        <ProtectedRoute component={Products} allowedRole="admin" />
+      </Route>
+      <Route path="/stores">
+        <ProtectedRoute component={Stores} allowedRole="admin" />
+      </Route>
+      <Route path="/tasks">
+        <ProtectedRoute component={Tasks} allowedRole="admin" />
+      </Route>
+      <Route path="/deliveries">
+        <ProtectedRoute component={Deliveries} allowedRole="admin" />
+      </Route>
+      <Route path="/accounting">
+        <ProtectedRoute component={Accounting} allowedRole="admin" />
+      </Route>
+      <Route path="/map">
+        <ProtectedRoute component={MapPage} allowedRole="admin" />
+      </Route>
+      <Route path="/suggestions">
+        <ProtectedRoute component={Suggestions} allowedRole="admin" />
+      </Route>
 
-      <Route path="/distributor" component={() => <ProtectedRoute component={DistributorHome} allowedRole="distributor" />} />
-      <Route path="/distributor/tasks" component={() => <ProtectedRoute component={DistributorTasks} allowedRole="distributor" />} />
-      <Route path="/distributor/map" component={() => <ProtectedRoute component={DistributorMap} allowedRole="distributor" />} />
-      <Route path="/distributor/suggest" component={() => <ProtectedRoute component={SuggestStore} allowedRole="distributor" />} />
+      <Route path="/distributor">
+        <ProtectedRoute component={DistributorHome} allowedRole="distributor" />
+      </Route>
+      <Route path="/distributor/tasks">
+        <ProtectedRoute component={DistributorTasks} allowedRole="distributor" />
+      </Route>
+      <Route path="/distributor/map">
+        <ProtectedRoute component={DistributorMap} allowedRole="distributor" />
+      </Route>
+      <Route path="/distributor/suggest">
+        <ProtectedRoute component={SuggestStore} allowedRole="distributor" />
+      </Route>
 
-      <Route component={NotFound} />
+      <Route>
+        <NotFound />
+      </Route>
     </Switch>
   );
 }
