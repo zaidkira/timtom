@@ -1,10 +1,14 @@
 import { useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getMapLocations, getGetMapLocationsQueryKey } from "@workspace/api-client-react";
+import "leaflet/dist/leaflet.css";
 
 export default function MapPage() {
-  const mapRef = useRef<any>(null);
+  const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
+  const leafletRef = useRef<any>(null);
+  const storesLayerRef = useRef<any>(null);
+  const distributorsLayerRef = useRef<any>(null);
 
   const { data } = useQuery({
     queryKey: getGetMapLocationsQueryKey(),
@@ -14,54 +18,100 @@ export default function MapPage() {
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current) return;
 
+    let resizeObserver: ResizeObserver | null = null;
+
     import("leaflet").then((L) => {
-      import("leaflet/dist/leaflet.css");
-
-      const map = L.map(mapRef.current!).setView([36.7525, 3.0420], 13);
+      const map = L.map(mapRef.current!).setView([36.7525, 3.042], 13);
       mapInstanceRef.current = map;
+      leafletRef.current = L;
 
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: "© OpenStreetMap contributors",
+      let tileProviderIndex = 0;
+      const tileProviders = [
+        {
+          url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+          attribution: "© OpenStreetMap contributors",
+        },
+        {
+          url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+          attribution: "© OpenStreetMap contributors © CARTO",
+        },
+      ];
+
+      let tiles = L.tileLayer(tileProviders[0].url, {
+        attribution: tileProviders[0].attribution,
+        maxZoom: 19,
       }).addTo(map);
 
-      const storeIcon = L.divIcon({
-        html: '<div style="background:#3b82f6;width:16px;height:16px;border-radius:50%;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3)"></div>',
-        iconSize: [16, 16],
-        className: "",
+      tiles.on("tileerror", () => {
+        if (tileProviderIndex >= tileProviders.length - 1) return;
+        tileProviderIndex += 1;
+        map.removeLayer(tiles);
+        tiles = L.tileLayer(tileProviders[tileProviderIndex].url, {
+          attribution: tileProviders[tileProviderIndex].attribution,
+          maxZoom: 19,
+        }).addTo(map);
       });
-      const distIcon = L.divIcon({
-        html: '<div style="background:#22c55e;width:16px;height:16px;border-radius:50%;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3)"></div>',
-        iconSize: [16, 16],
-        className: "",
-      });
 
-      if (data) {
-        data.stores.forEach((s: any) => {
-          L.marker([s.latitude, s.longitude], { icon: storeIcon })
-            .bindPopup(`<div dir="rtl"><b>${s.name}</b><br>دين: ${s.debt?.toLocaleString("ar-DZ")} دج</div>`)
-            .addTo(map);
-        });
+      map.whenReady(() => map.invalidateSize());
+      setTimeout(() => map.invalidateSize(), 300);
 
-        data.distributors.forEach((d: any) => {
-          if (d.latitude && d.longitude) {
-            L.marker([d.latitude, d.longitude], { icon: distIcon })
-              .bindPopup(`<div dir="rtl"><b>${d.name}</b><br>الحالة: ${d.isActive ? "نشط" : "غير نشط"}</div>`)
-              .addTo(map);
-          }
-        });
-      }
-
-      setTimeout(() => {
+      resizeObserver = new ResizeObserver(() => {
         map.invalidateSize();
-      }, 500);
+      });
+      resizeObserver.observe(mapRef.current!);
     });
 
     return () => {
+      if (resizeObserver) resizeObserver.disconnect();
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
       }
+      storesLayerRef.current = null;
+      distributorsLayerRef.current = null;
+      leafletRef.current = null;
     };
+  }, []);
+
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    const L = leafletRef.current;
+    if (!map || !L || !data) return;
+
+    if (storesLayerRef.current) map.removeLayer(storesLayerRef.current);
+    if (distributorsLayerRef.current) map.removeLayer(distributorsLayerRef.current);
+
+    const storeIcon = L.divIcon({
+      html: '<div style="background:#3b82f6;width:16px;height:16px;border-radius:50%;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3)"></div>',
+      iconSize: [16, 16],
+      className: "",
+    });
+    const distIcon = L.divIcon({
+      html: '<div style="background:#22c55e;width:16px;height:16px;border-radius:50%;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3)"></div>',
+      iconSize: [16, 16],
+      className: "",
+    });
+
+    const storesLayer = L.layerGroup();
+    data.stores.forEach((s: any) => {
+      L.marker([s.latitude, s.longitude], { icon: storeIcon })
+        .bindPopup(`<div dir="rtl"><b>${s.name}</b><br>دين: ${s.debt?.toLocaleString("ar-DZ")} دج</div>`)
+        .addTo(storesLayer);
+    });
+
+    const distributorsLayer = L.layerGroup();
+    data.distributors.forEach((d: any) => {
+      if (d.latitude && d.longitude) {
+        L.marker([d.latitude, d.longitude], { icon: distIcon })
+          .bindPopup(`<div dir="rtl"><b>${d.name}</b><br>الحالة: ${d.isActive ? "نشط" : "غير نشط"}</div>`)
+          .addTo(distributorsLayer);
+      }
+    });
+
+    storesLayer.addTo(map);
+    distributorsLayer.addTo(map);
+    storesLayerRef.current = storesLayer;
+    distributorsLayerRef.current = distributorsLayer;
   }, [data]);
 
   return (
