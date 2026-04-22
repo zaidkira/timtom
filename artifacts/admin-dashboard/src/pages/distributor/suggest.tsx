@@ -120,7 +120,7 @@ export default function SuggestStore() {
             >
               <MapPin className={`w-5 h-5 ${isLocating ? "animate-bounce" : ""}`} />
               {isLocating ? "جارٍ تحديد الموقع..." : coords ? "تم تحديد الموقع الجغرافي" : "اضغط هنا لتحديد موقعك الحالي"}
-            </button>
+            </div>
           </div>
 
           <div className="space-y-2">

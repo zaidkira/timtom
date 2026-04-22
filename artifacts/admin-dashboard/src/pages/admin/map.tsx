@@ -9,7 +9,7 @@ export default function MapPage() {
   const leafletRef = useRef<any>(null);
   const markersLayerRef = useRef<any>(null);
 
-  const { data, isLoading } = useQuery({
+  const { data } = useQuery({
     queryKey: getGetMapLocationsQueryKey(),
     queryFn: getMapLocations,
     refetchInterval: 5000,
