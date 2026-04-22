@@ -10,6 +10,8 @@ function LocationTracker({ distributorId }: { distributorId: number }) {
   useEffect(() => {
     if (!navigator.geolocation) return;
 
+    let permissionDenied = false;
+
     const sendLocation = (pos: GeolocationPosition) => {
       fetch(`/api/distributors/${distributorId}/location`, {
         method: "PUT",
@@ -20,15 +22,31 @@ function LocationTracker({ distributorId }: { distributorId: number }) {
           latitude: pos.coords.latitude,
           longitude: pos.coords.longitude
         })
-      }).catch(err => console.error("Failed to update location", err));
+      }).catch((err) => console.error("Failed to update location", err));
     };
 
     // Initial update
-    navigator.geolocation.getCurrentPosition(sendLocation);
+    navigator.geolocation.getCurrentPosition(sendLocation, (err) => {
+      // User can deny location access; this should not be treated as app failure.
+      if (err.code === err.PERMISSION_DENIED) {
+        permissionDenied = true;
+        return;
+      }
+      console.error("Initial location error", err);
+    });
 
     const watchId = navigator.geolocation.watchPosition(
       sendLocation,
-      (err) => console.error("Location error", err),
+      (err) => {
+        if (err.code === err.PERMISSION_DENIED) {
+          permissionDenied = true;
+          return;
+        }
+        // Avoid noisy repeat logs if permission was already denied.
+        if (!permissionDenied) {
+          console.error("Location error", err);
+        }
+      },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
     );
 

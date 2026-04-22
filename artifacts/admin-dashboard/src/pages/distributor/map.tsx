@@ -52,33 +52,38 @@ export default function DistributorMap() {
       });
 
       if ("geolocation" in navigator) {
-        navigator.geolocation.getCurrentPosition((pos) => {
-          const { latitude, longitude } = pos.coords;
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const { latitude, longitude } = pos.coords;
 
-          if (userLayerRef.current) {
-            map.removeLayer(userLayerRef.current);
+            if (userLayerRef.current) {
+              map.removeLayer(userLayerRef.current);
+            }
+
+            const userLayer = L.layerGroup();
+            L.circle([latitude, longitude], {
+              radius: 100,
+              color: "#22c55e",
+              fillColor: "#22c55e",
+              fillOpacity: 0.3,
+            }).addTo(userLayer);
+
+            L.marker([latitude, longitude], {
+              icon: L.divIcon({
+                html: '<div style="background:#22c55e;width:12px;height:12px;border-radius:50%;border:2px solid white;box-shadow:0 0 0 4px rgba(34,197,94,0.3)"></div>',
+                iconSize: [12, 12],
+                className: "animate-pulse",
+              }),
+            }).addTo(userLayer);
+
+            userLayer.addTo(map);
+            userLayerRef.current = userLayer;
+            map.setView([latitude, longitude], 14);
+          },
+          () => {
+            // Permission denied or unavailable location should not break map rendering.
           }
-
-          const userLayer = L.layerGroup();
-          L.circle([latitude, longitude], {
-            radius: 100,
-            color: "#22c55e",
-            fillColor: "#22c55e",
-            fillOpacity: 0.3,
-          }).addTo(userLayer);
-
-          L.marker([latitude, longitude], {
-            icon: L.divIcon({
-              html: '<div style="background:#22c55e;width:12px;height:12px;border-radius:50%;border:2px solid white;box-shadow:0 0 0 4px rgba(34,197,94,0.3)"></div>',
-              iconSize: [12, 12],
-              className: "animate-pulse",
-            }),
-          }).addTo(userLayer);
-
-          userLayer.addTo(map);
-          userLayerRef.current = userLayer;
-          map.setView([latitude, longitude], 14);
-        });
+        );
       }
 
       map.whenReady(() => map.invalidateSize());
