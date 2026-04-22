@@ -23,7 +23,12 @@ export default function DistributorMap() {
     if (!("geolocation" in navigator)) return;
     navigator.geolocation.getCurrentPosition(
       (pos) => setUserPosition([pos.coords.latitude, pos.coords.longitude]),
-      () => console.log("Location access denied")
+      () => {
+        console.log("Location access denied - centering on Algiers");
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.setView(ALGIERS_CENTER, 13);
+        }
+      }
     );
   }, []);
 
