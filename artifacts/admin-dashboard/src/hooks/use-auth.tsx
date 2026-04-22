@@ -22,6 +22,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryKey: getGetMeQueryKey(),
     queryFn: () => getMe(),
     retry: false,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   const loginMutation = useMutation({
