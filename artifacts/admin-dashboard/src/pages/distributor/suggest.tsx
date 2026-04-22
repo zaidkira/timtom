@@ -110,14 +110,13 @@ export default function SuggestStore() {
             </label>
             <textarea name="address" rows={2} required className="w-full p-4 rounded-2xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-primary/20" placeholder="اكتب عنوان المحل بالتفصيل..." />
 
-            <button
-              type="button"
+            <div
               onClick={(e) => {
                 e.preventDefault();
-                handleGetLocation();
+                if (!isLocating) handleGetLocation();
               }}
-              disabled={isLocating}
-              className={`w-full p-4 rounded-2xl border-2 border-dashed flex items-center justify-center gap-2 transition-all ${coords ? "border-emerald-500 bg-emerald-50 text-emerald-600" : "border-slate-200 text-slate-500 hover:border-primary/40"}`}
+              className={`w-full p-4 rounded-2xl border-2 border-dashed flex items-center justify-center gap-2 transition-all cursor-pointer ${coords ? "border-emerald-500 bg-emerald-50 text-emerald-600" : "border-slate-200 text-slate-500 hover:border-primary/40"}`}
+              role="button"
             >
               <MapPin className={`w-5 h-5 ${isLocating ? "animate-bounce" : ""}`} />
               {isLocating ? "جارٍ تحديد الموقع..." : coords ? "تم تحديد الموقع الجغرافي" : "اضغط هنا لتحديد موقعك الحالي"}

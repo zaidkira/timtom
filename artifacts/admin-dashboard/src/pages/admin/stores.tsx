@@ -221,8 +221,7 @@ function StoreModal({ store, isOpen, onClose }: { store?: Store, isOpen: boolean
         <div className="space-y-2">
           <div className="flex justify-between items-center">
             <label className="text-sm font-bold">حدد الموقع على الخريطة</label>
-            <button
-              type="button"
+            <div
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -245,11 +244,12 @@ function StoreModal({ store, isOpen, onClose }: { store?: Store, isOpen: boolean
                 );
               }}
               id="get-admin-loc"
-              className="text-xs font-bold text-primary flex items-center gap-1 hover:underline"
+              className="text-xs font-bold text-primary flex items-center gap-1 hover:underline cursor-pointer"
+              role="button"
             >
               <MapPin className="w-3 h-3" />
               استخدام موقعي الحالي
-            </button>
+            </div>
           </div>
           <div className="h-64 rounded-xl overflow-hidden border border-slate-200 relative">
             <MapContainer center={position} zoom={13} scrollWheelZoom={true} className="h-full w-full">
