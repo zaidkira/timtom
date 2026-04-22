@@ -39,7 +39,7 @@ router.post("/", requireRole("distributor"), async (req, res) => {
   const { name, ownerName, phone, address, photoUrl, latitude, longitude } = req.body;
   const distributorId = req.session.distributorId;
 
-  if (!name || !phone || !address || latitude == null || longitude == null || !distributorId) {
+  if (!name || !phone || latitude == null || longitude == null || !distributorId) {
     res.status(400).json({ error: "validation_error", message: "Missing required fields" });
     return;
   }

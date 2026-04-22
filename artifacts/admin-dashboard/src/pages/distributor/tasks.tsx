@@ -130,30 +130,23 @@ function DeliveryModal({ task, onClose }: { task: any, onClose: () => void }) {
     e.preventDefault();
 
     // Use a single mutation for better reliability if possible, or ensure sequential execution
-    updateTaskMutation.mutate({ id: task.id, data: { status: "completed" } }, {
+    deliveryMutation.mutate({
+      data: {
+        taskId: task.id,
+        amountCollected: Number(amountCollected),
+        latitude: Number(task.storeLatitude),
+        longitude: Number(task.storeLongitude),
+        photoUrl: photoBase64 || "https://images.unsplash.com/photo-1620803554446-4131ee68ea82?w=400&h=300&fit=crop"
+      }
+    }, {
       onSuccess: () => {
-        deliveryMutation.mutate({
-          data: {
-            taskId: task.id,
-            amountCollected: Number(amountCollected),
-            latitude: Number(task.storeLatitude),
-            longitude: Number(task.storeLongitude),
-            photoUrl: photoBase64 || "https://images.unsplash.com/photo-1620803554446-4131ee68ea82?w=400&h=300&fit=crop"
-          }
-        }, {
-          onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
-            queryClient.invalidateQueries({ queryKey: ["/api/map/locations"] });
-            toast({ title: "تم تسجيل التسليم بنجاح" });
-            onClose();
-          },
-          onError: () => {
-            toast({ title: "خطأ في تسجيل التسليم", variant: "destructive" });
-          }
-        });
+        queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/map/locations"] });
+        toast({ title: "تم تسجيل التسليم بنجاح" });
+        onClose();
       },
       onError: () => {
-        toast({ title: "خطأ في تحديث حالة المهمة", variant: "destructive" });
+        toast({ title: "خطأ في تسجيل التسليم", variant: "destructive" });
       }
     });
   };
