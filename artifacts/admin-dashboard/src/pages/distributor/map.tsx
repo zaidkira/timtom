@@ -1,7 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getMapLocations, getGetMapLocationsQueryKey } from "@workspace/api-client-react";
-import "leaflet/dist/leaflet.css";
 
 export default function DistributorMap() {
   const mapRef = useRef<HTMLDivElement>(null);
