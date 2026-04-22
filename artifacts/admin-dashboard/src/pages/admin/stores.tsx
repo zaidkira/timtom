@@ -142,6 +142,14 @@ function LocationPicker({ pos, setPos }: { pos: [number, number], setPos: (p: [n
   return <Marker position={pos} />;
 }
 
+function MapRecenter({ pos }: { pos: [number, number] }) {
+  const map = L.useMap();
+  useEffect(() => {
+    map.setView(pos);
+  }, [pos, map]);
+  return null;
+}
+
 function StoreModal({ store, isOpen, onClose }: { store?: Store, isOpen: boolean, onClose: () => void }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -215,7 +223,9 @@ function StoreModal({ store, isOpen, onClose }: { store?: Store, isOpen: boolean
             <label className="text-sm font-bold">حدد الموقع على الخريطة</label>
             <button
               type="button"
-              onClick={() => {
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 if (!navigator.geolocation) {
                   toast({ title: "المتصفح لا يدعم تحديد الموقع", variant: "destructive" });
                   return;
@@ -245,6 +255,7 @@ function StoreModal({ store, isOpen, onClose }: { store?: Store, isOpen: boolean
             <MapContainer center={position} zoom={13} scrollWheelZoom={true} className="h-full w-full">
               <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
               <LocationPicker pos={position} setPos={setPosition} />
+              <MapRecenter pos={position} />
             </MapContainer>
           </div>
           <p className="text-xs text-slate-500">اضغط على الخريطة لتحديد الموقع أو استخدم زر التحديد التلقائي</p>
