@@ -1,15 +1,26 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getMapLocations, getGetMapLocationsQueryKey } from "@workspace/api-client-react";
+import { getGetMapLocationsQueryKey, getMapLocations } from "@workspace/api-client-react";
+import { Circle, MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
+import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
+const ALGIERS_CENTER: [number, number] = [36.7525, 3.042];
+
+function RecenterOnUser({ position }: { position: [number, number] | null }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!position) return;
+    map.setView(position, 14);
+  }, [map, position]);
+
+  return null;
+}
+
 export default function DistributorMap() {
-  const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<any>(null);
-  const leafletRef = useRef<any>(null);
-  const storesLayerRef = useRef<any>(null);
-  const userLayerRef = useRef<any>(null);
-  const [mapError, setMapError] = useState<string | null>(null);
+  const [userPosition, setUserPosition] = useState<[number, number] | null>(null);
+  const [tileStatus, setTileStatus] = useState<"idle" | "loading" | "loaded" | "error">("idle");
 
   const { data, isLoading } = useQuery({
     queryKey: getGetMapLocationsQueryKey(),
@@ -18,137 +29,41 @@ export default function DistributorMap() {
   });
 
   useEffect(() => {
-    if (!mapRef.current || mapInstanceRef.current) return;
+    if (!("geolocation" in navigator)) return;
 
-    let resizeObserver: ResizeObserver | null = null;
-
-    import("leaflet")
-      .then((L) => {
-        const map = L.map(mapRef.current!).setView([36.7525, 3.042], 13);
-        mapInstanceRef.current = map;
-        leafletRef.current = L;
-
-        let tileProviderIndex = 0;
-        const tileProviders = [
-          {
-            url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-            attribution: "© OpenStreetMap contributors",
-          },
-          {
-            url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-            attribution: "© OpenStreetMap contributors © CARTO",
-          },
-        ];
-
-        let tiles = L.tileLayer(tileProviders[0].url, {
-          attribution: tileProviders[0].attribution,
-          maxZoom: 19,
-        }).addTo(map);
-
-        tiles.on("tileerror", () => {
-          if (tileProviderIndex < tileProviders.length - 1) {
-            tileProviderIndex += 1;
-            map.removeLayer(tiles);
-            tiles = L.tileLayer(tileProviders[tileProviderIndex].url, {
-              attribution: tileProviders[tileProviderIndex].attribution,
-              maxZoom: 19,
-            }).addTo(map);
-            return;
-          }
-
-          setMapError("Unable to load map tiles. Check network or browser restrictions.");
-        });
-
-        if ("geolocation" in navigator) {
-          navigator.geolocation.getCurrentPosition(
-            (pos) => {
-              const { latitude, longitude } = pos.coords;
-
-              if (userLayerRef.current) {
-                map.removeLayer(userLayerRef.current);
-              }
-
-              const userLayer = L.layerGroup();
-              L.circle([latitude, longitude], {
-                radius: 100,
-                color: "#22c55e",
-                fillColor: "#22c55e",
-                fillOpacity: 0.3,
-              }).addTo(userLayer);
-
-              L.marker([latitude, longitude], {
-                icon: L.divIcon({
-                  html: '<div style="background:#22c55e;width:12px;height:12px;border-radius:50%;border:2px solid white;box-shadow:0 0 0 4px rgba(34,197,94,0.3)"></div>',
-                  iconSize: [12, 12],
-                  className: "animate-pulse",
-                }),
-              }).addTo(userLayer);
-
-              userLayer.addTo(map);
-              userLayerRef.current = userLayer;
-              map.setView([latitude, longitude], 14);
-            },
-            () => {
-              // Permission denied should not break rendering.
-            }
-          );
-        }
-
-        map.whenReady(() => map.invalidateSize());
-        setTimeout(() => map.invalidateSize(), 300);
-
-        resizeObserver = new ResizeObserver(() => {
-          map.invalidateSize();
-        });
-        resizeObserver.observe(mapRef.current!);
-      })
-      .catch((error) => {
-        console.error("Leaflet import failed", error);
-        setMapError("Unable to initialize map.");
-      });
-
-    return () => {
-      if (resizeObserver) resizeObserver.disconnect();
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
-        mapInstanceRef.current = null;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setUserPosition([pos.coords.latitude, pos.coords.longitude]),
+      () => {
+        // Permission denied or unavailable location should not break map rendering.
       }
-      storesLayerRef.current = null;
-      userLayerRef.current = null;
-      leafletRef.current = null;
-    };
+    );
   }, []);
 
-  useEffect(() => {
-    const map = mapInstanceRef.current;
-    const L = leafletRef.current;
-    if (!map || !L || !data) return;
+  const storeIcon = useMemo(
+    () =>
+      L.divIcon({
+        html: '<div style="background:#3b82f6;width:16px;height:16px;border-radius:50%;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3)"></div>',
+        iconSize: [16, 16],
+        className: "",
+      }),
+    []
+  );
 
-    if (storesLayerRef.current) {
-      map.removeLayer(storesLayerRef.current);
-    }
+  const userIcon = useMemo(
+    () =>
+      L.divIcon({
+        html: '<div style="background:#22c55e;width:12px;height:12px;border-radius:50%;border:2px solid white;box-shadow:0 0 0 4px rgba(34,197,94,0.3)"></div>',
+        iconSize: [12, 12],
+        className: "animate-pulse",
+      }),
+    []
+  );
 
-    const storeIcon = L.divIcon({
-      html: '<div style="background:#3b82f6;width:16px;height:16px;border-radius:50%;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3)"></div>',
-      iconSize: [16, 16],
-      className: "",
-    });
-
-    const storesLayer = L.layerGroup();
-
-    (data.stores ?? []).forEach((s: any) => {
-      const lat = Number(s.latitude);
-      const lng = Number(s.longitude);
-      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
-
-      L.marker([lat, lng], { icon: storeIcon })
-        .bindPopup(`<div dir="rtl" class="font-sans"><b>${s.name}</b><br>${s.address ?? ""}</div>`)
-        .addTo(storesLayer);
-    });
-
-    storesLayer.addTo(map);
-    storesLayerRef.current = storesLayer;
-  }, [data]);
+  const stores = (data?.stores ?? []).filter((s: any) => {
+    const lat = Number(s.latitude);
+    const lng = Number(s.longitude);
+    return Number.isFinite(lat) && Number.isFinite(lng);
+  });
 
   if (isLoading) return <div className="p-20 text-center font-bold text-slate-400">جاري التحميل...</div>;
 
@@ -169,10 +84,41 @@ export default function DistributorMap() {
       </div>
 
       <div className="flex-1 min-h-[500px] bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden relative z-10">
-        <div ref={mapRef} style={{ height: "100%", width: "100%" }} />
-        {mapError && (
+        <MapContainer center={ALGIERS_CENTER} zoom={13} scrollWheelZoom className="h-full w-full">
+          <TileLayer
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution="© OpenStreetMap contributors"
+            eventHandlers={{
+              loading: () => setTileStatus("loading"),
+              load: () => setTileStatus("loaded"),
+              tileerror: () => setTileStatus("error"),
+            }}
+          />
+
+          {stores.map((s: any) => (
+            <Marker key={s.id} position={[Number(s.latitude), Number(s.longitude)]} icon={storeIcon}>
+              <Popup>
+                <div dir="rtl" className="font-sans">
+                  <b>{s.name}</b>
+                  <br />
+                  {s.address ?? ""}
+                </div>
+              </Popup>
+            </Marker>
+          ))}
+
+          {userPosition && (
+            <>
+              <Circle center={userPosition} radius={100} pathOptions={{ color: "#22c55e", fillColor: "#22c55e", fillOpacity: 0.3 }} />
+              <Marker position={userPosition} icon={userIcon} />
+              <RecenterOnUser position={userPosition} />
+            </>
+          )}
+        </MapContainer>
+
+        {tileStatus === "error" && (
           <div className="absolute bottom-2 left-2 right-2 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-lg px-3 py-2">
-            {mapError}
+            فشل تحميل بلاطات الخريطة. تحقق من الاتصال أو مانع الإعلانات أو إعدادات المتصفح.
           </div>
         )}
       </div>
