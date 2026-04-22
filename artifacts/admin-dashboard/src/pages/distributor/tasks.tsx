@@ -38,7 +38,7 @@ export default function DistributorTasks() {
 
               <div className="flex justify-between items-start mb-3">
                 <h3 className="font-bold text-lg text-slate-900">{task.storeName}</h3>
-                <Badge variant={task.status === "in_progress" ? "default" : "warning"} className="text-[10px]">
+                <Badge variant={task.status === "in_progress" ? "outline" : "secondary"} className="text-[10px]">
                   {task.status === "in_progress" ? "جاري التنفيذ" : "قيد الانتظار"}
                 </Badge>
               </div>

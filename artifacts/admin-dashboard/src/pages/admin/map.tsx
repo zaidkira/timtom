@@ -59,8 +59,8 @@ export default function MapPage() {
 
     // Add Stores
     data.stores.forEach((s: any) => {
-      const lat = parseFloat(s.latitude);
-      const lng = parseFloat(s.longitude);
+      const lat = parseFloat(String(s.latitude));
+      const lng = parseFloat(String(s.longitude));
       if (!isNaN(lat) && !isNaN(lng) && lat !== 0) {
         L.marker([lat, lng])
           .bindPopup(`<div dir="rtl"><b>🏠 ${s.name}</b><br>دين: ${s.debt?.toLocaleString("ar-DZ")} دج</div>`)
@@ -70,8 +70,8 @@ export default function MapPage() {
 
     // Add Distributors
     data.distributors.forEach((d: any) => {
-      const lat = parseFloat(d.latitude);
-      const lng = parseFloat(d.longitude);
+      const lat = parseFloat(String(d.latitude));
+      const lng = parseFloat(String(d.longitude));
       if (!isNaN(lat) && !isNaN(lng) && lat !== 0) {
         // Use a different color for distributors if possible, or just a custom icon
         const distIcon = L.divIcon({
@@ -97,8 +97,9 @@ export default function MapPage() {
         <h1 className="text-2xl font-bold text-slate-800">الخريطة الشاملة</h1>
         <div className="flex gap-4 text-sm font-medium">
           <div className="flex items-center gap-2">
-            <span className="w-3 h-3 bg-blue-500 rounded-full" />
-            <span className="text-slate-600">المحلات (دبابيس زرقاء)</span>
+            <Badge variant="secondary" className="text-[10px]">
+              المحلات
+            </Badge>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-3 h-3 bg-green-500 rounded-full" />
