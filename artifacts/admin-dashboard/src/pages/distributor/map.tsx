@@ -114,43 +114,51 @@ export default function DistributorMap() {
     });
 
     // 1. Add All Stores
-    locations.stores.forEach((s: any) => {
-      const lat = Number(s.latitude);
-      const lng = Number(s.longitude);
-      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+    if (locations.stores) {
+      console.log(`Map: Rendering ${locations.stores.length} stores`);
+      locations.stores.forEach((s: any) => {
+        const lat = Number(s.latitude);
+        const lng = Number(s.longitude);
+        if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat === 0) return;
 
-      const isTarget = activeTask?.storeId === s.id;
-      L.marker([lat, lng], { icon: isTarget ? targetStoreIcon : storeIcon })
-        .bindPopup(`<div dir="rtl"><b>${isTarget ? "📍 وجهتك الحالية: " : ""}${s.name}</b><br>${s.address || ""}</div>`)
-        .addTo(map);
-    });
+        const isTarget = activeTask?.storeId === s.id;
+        L.marker([lat, lng], { icon: isTarget ? targetStoreIcon : storeIcon })
+          .bindPopup(`<div dir="rtl"><b>${isTarget ? "📍 وجهتك الحالية: " : ""}${s.name}</b><br>${s.address || ""}</div>`)
+          .addTo(map);
+      });
+    }
 
     // 2. Add Other Distributors
-    locations.distributors.forEach((d: any) => {
-      if (d.id === user?.distributorId) return; // Skip self
-      const lat = Number(d.latitude);
-      const lng = Number(d.longitude);
-      if (Number.isFinite(lat) && Number.isFinite(lng)) {
-        L.marker([lat, lng], { icon: distIcon })
-          .bindPopup(`<div dir="rtl"><b>موزع آخر: ${d.name}</b></div>`)
-          .addTo(map);
-      }
-    });
+    if (locations.distributors) {
+      locations.distributors.forEach((d: any) => {
+        if (d.id === user?.distributorId) return; // Skip self
+        const lat = Number(d.latitude);
+        const lng = Number(d.longitude);
+        if (Number.isFinite(lat) && Number.isFinite(lng) && lat !== 0) {
+          L.marker([lat, lng], { icon: distIcon })
+            .bindPopup(`<div dir="rtl"><b>موزع آخر: ${d.name}</b></div>`)
+            .addTo(map);
+        }
+      });
+    }
 
-    // 3. Add User and Draw Line to Target
+    // 3. Zoom Logic
     if (userPosition) {
       L.marker(userPosition, { icon: userIcon }).bindPopup("أنت هنا").addTo(map);
 
       if (activeTask) {
         const targetPos: [number, number] = [Number(activeTask.storeLatitude), Number(activeTask.storeLongitude)];
-        if (Number.isFinite(targetPos[0]) && Number.isFinite(targetPos[1])) {
-          // Draw line from user to store
-          L.polyline([userPosition, targetPos], { color: "#3b82f6", weight: 3, dashArray: "10, 10", opacity: 0.7 }).addTo(map);
-          
-          // Auto-zoom to show both user and target
+        if (Number.isFinite(targetPos[0]) && Number.isFinite(targetPos[1]) && targetPos[0] !== 0) {
+          L.polyline([userPosition, targetPos], { color: "#3b82f6", weight: 4, dashArray: "10, 15", opacity: 0.8 }).addTo(map);
           const bounds = L.latLngBounds([userPosition, targetPos]);
-          map.fitBounds(bounds, { padding: [50, 50] });
+          map.fitBounds(bounds, { padding: [70, 70] });
         }
+      }
+    } else if (activeTask) {
+      // If user location unknown, at least zoom to the target store
+      const targetPos: [number, number] = [Number(activeTask.storeLatitude), Number(activeTask.storeLongitude)];
+      if (Number.isFinite(targetPos[0]) && Number.isFinite(targetPos[1]) && targetPos[0] !== 0) {
+        map.setView(targetPos, 16);
       }
     }
   }, [locations, tasks, userPosition, isLocationsLoading, activeTask]);
