@@ -3,6 +3,38 @@ import { useCreateStoreSuggestion } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { Store, User, MapPin, Phone, Camera } from "lucide-react";
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet";
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+import { useEffect } from "react";
+
+// Fix leaflet icon
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconUrl: markerIcon,
+  iconRetinaUrl: markerIcon2x,
+  shadowUrl: markerShadow,
+});
+
+function LocationPicker({ pos, setPos }: { pos: [number, number], setPos: (p: { lat: number, lng: number }) => void }) {
+  useMapEvents({
+    click(e) {
+      setPos({ lat: e.latlng.lat, lng: e.latlng.lng });
+    },
+  });
+  return <Marker position={pos} />;
+}
+
+function MapRecenter({ pos }: { pos: [number, number] }) {
+  const map = useMap();
+  useEffect(() => {
+    map.setView(pos);
+  }, [pos, map]);
+  return null;
+}
 
 export default function SuggestStore() {
   const { toast } = useToast();
@@ -106,20 +138,42 @@ export default function SuggestStore() {
           <div className="space-y-2">
             <label className="text-sm font-bold flex items-center gap-2">
               <MapPin className="w-4 h-4 text-primary" />
-              العنوان / الموقع
+              العنوان (اختياري)
             </label>
-            <textarea name="address" rows={2} required className="w-full p-4 rounded-2xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-primary/20" placeholder="اكتب عنوان المحل بالتفصيل..." />
-
-            <div
-              onClick={(e) => {
-                e.preventDefault();
-                if (!isLocating) handleGetLocation();
-              }}
-              className={`w-full p-4 rounded-2xl border-2 border-dashed flex items-center justify-center gap-2 transition-all cursor-pointer ${coords ? "border-emerald-500 bg-emerald-50 text-emerald-600" : "border-slate-200 text-slate-500 hover:border-primary/40"}`}
-              role="button"
-            >
-              <MapPin className={`w-5 h-5 ${isLocating ? "animate-bounce" : ""}`} />
-              {isLocating ? "جارٍ تحديد الموقع..." : coords ? "تم تحديد الموقع الجغرافي" : "اضغط هنا لتحديد موقعك الحالي"}
+            <textarea name="address" rows={2} className="w-full p-4 rounded-2xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-primary/20" placeholder="اكتب عنوان المحل بالتفصيل..." />
+ 
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <label className="text-sm font-bold">حدد الموقع على الخريطة</label>
+                <div
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (!isLocating) handleGetLocation();
+                  }}
+                  className="text-xs font-bold text-primary flex items-center gap-1 hover:underline cursor-pointer"
+                  role="button"
+                >
+                  <MapPin className={`w-3 h-3 ${isLocating ? "animate-bounce" : ""}`} />
+                  {isLocating ? "جارٍ التحديد..." : "استخدام موقعي الحالي"}
+                </div>
+              </div>
+              
+              <div className="h-64 rounded-2xl overflow-hidden border border-slate-100 relative">
+                <MapContainer 
+                  center={coords ? [coords.lat, coords.lng] : [36.7525, 3.04197]} 
+                  zoom={13} 
+                  scrollWheelZoom={true} 
+                  className="h-full w-full"
+                >
+                  <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                  <LocationPicker 
+                    pos={coords ? [coords.lat, coords.lng] : [36.7525, 3.04197]} 
+                    setPos={setCoords} 
+                  />
+                  {coords && <MapRecenter pos={[coords.lat, coords.lng]} />}
+                </MapContainer>
+              </div>
+              <p className="text-[10px] text-slate-400">اضغط على الخريطة لتغيير الموقع أو استخدم زر التحديد التلقائي</p>
             </div>
           </div>
 
