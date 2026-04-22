@@ -4,12 +4,31 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Modal } from "@/components/ui/modal";
 import { Plus, ListTodo, Store, Trash2 } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Tasks() {
   const { data: tasks, isLoading } = useGetTasks();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  const deleteTaskMutation = useMutation({
+    mutationFn: async (taskId: number) => {
+      const response = await fetch(`/api/tasks/${taskId}`, { method: "DELETE" });
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        throw new Error(body?.message || "Failed to delete task");
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+      toast({ title: "Task deleted successfully" });
+    },
+    onError: (error: any) => {
+      toast({ title: error?.message || "Failed to delete task", variant: "destructive" });
+    },
+  });
 
   if (isLoading) return <div className="p-8 text-center">جاري التحميل...</div>;
 
@@ -56,7 +75,21 @@ export default function Tasks() {
                 </h3>
                 <p className="text-sm text-slate-500 mt-1">الموزع: {task.distributorName}</p>
               </div>
-              <Badge variant={statusColors[task.status] as any}>{statusLabels[task.status]}</Badge>
+              <div className="flex items-center gap-2">
+                <Badge variant={statusColors[task.status] as any}>{statusLabels[task.status]}</Badge>
+                <button
+                  onClick={() => {
+                    const confirmed = window.confirm(`Delete task #${task.id}? This cannot be undone.`);
+                    if (!confirmed) return;
+                    deleteTaskMutation.mutate(task.id);
+                  }}
+                  className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                  disabled={deleteTaskMutation.isPending}
+                  title="Delete task"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
             </div>
             
             <div className="flex-1">

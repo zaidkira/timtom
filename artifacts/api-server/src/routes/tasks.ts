@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { db, distributorsTable, productsTable, storesTable, tasksTable, usersTable } from "@workspace/db";
+import { db, deliveriesTable, distributorsTable, productsTable, storesTable, tasksTable, usersTable } from "@workspace/db";
 import { and, eq } from "drizzle-orm";
 import { getSessionContext, requireRole } from "../middlewares/auth";
 
@@ -151,6 +151,37 @@ router.put("/:id", requireRole("admin", "distributor"), async (req, res) => {
 
   await db.update(tasksTable).set(updates).where(eq(tasksTable.id, id));
   res.json(await getTaskFull(id));
+});
+
+router.delete("/:id", requireRole("admin"), async (req, res) => {
+  const id = Number.parseInt(String(req.params.id), 10);
+  if (Number.isNaN(id)) {
+    res.status(400).json({ error: "validation_error", message: "Invalid task id" });
+    return;
+  }
+
+  const existing = await db.select({ id: tasksTable.id }).from(tasksTable).where(eq(tasksTable.id, id)).limit(1);
+  if (existing.length === 0) {
+    res.status(404).json({ error: "not_found", message: "Task not found" });
+    return;
+  }
+
+  const deliveries = await db
+    .select({ id: deliveriesTable.id })
+    .from(deliveriesTable)
+    .where(eq(deliveriesTable.taskId, id))
+    .limit(1);
+
+  if (deliveries.length > 0) {
+    res.status(409).json({
+      error: "conflict",
+      message: "This task has delivery records and cannot be deleted.",
+    });
+    return;
+  }
+
+  await db.delete(tasksTable).where(eq(tasksTable.id, id));
+  res.json({ message: "Task deleted" });
 });
 
 export default router;

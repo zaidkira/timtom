@@ -1,8 +1,8 @@
 import { useState, useRef } from "react";
-import { useGetStores, useCreateStore, useUpdateStore, Store } from "@workspace/api-client-react";
+import { useGetStores, useCreateStore, useUpdateStore, useDeleteStore, Store } from "@workspace/api-client-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { Modal } from "@/components/ui/modal";
-import { Plus, Edit2, MapPin, Store as StoreIcon } from "lucide-react";
+import { Plus, Edit2, MapPin, Store as StoreIcon, Trash2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
@@ -24,6 +24,29 @@ export default function Stores() {
   const { data: stores, isLoading } = useGetStores();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingStore, setEditingStore] = useState<Store | null>(null);
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const deleteStoreMutation = useDeleteStore();
+
+  const handleDeleteStore = (store: Store) => {
+    const confirmed = window.confirm(`Delete store "${store.name}"? This cannot be undone.`);
+    if (!confirmed) return;
+
+    deleteStoreMutation.mutate(
+      { id: store.id },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ["/api/stores"] });
+          toast({ title: "Store deleted successfully" });
+        },
+        onError: (error: any) => {
+          const message =
+            error?.message || "Could not delete store. It may have related tasks or deliveries.";
+          toast({ title: message, variant: "destructive" });
+        },
+      }
+    );
+  };
 
   if (isLoading) return <div className="p-8 text-center">جاري التحميل...</div>;
 
@@ -56,9 +79,18 @@ export default function Stores() {
                   <p className="text-sm text-slate-500">{store.ownerName}</p>
                 </div>
               </div>
-              <button onClick={() => setEditingStore(store)} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-                <Edit2 className="w-4 h-4" />
-              </button>
+              <div className="flex items-center gap-1">
+                <button onClick={() => setEditingStore(store)} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                  <Edit2 className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => handleDeleteStore(store)}
+                  className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                  disabled={deleteStoreMutation.isPending}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
             </div>
             
             <div className="space-y-3 mt-4 bg-slate-50 p-4 rounded-xl">
