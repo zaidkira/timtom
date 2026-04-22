@@ -5,7 +5,7 @@ import { Modal } from "@/components/ui/modal";
 import { Plus, Edit2, MapPin, Store as StoreIcon, Trash2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet";
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
@@ -143,7 +143,7 @@ function LocationPicker({ pos, setPos }: { pos: [number, number], setPos: (p: [n
 }
 
 function MapRecenter({ pos }: { pos: [number, number] }) {
-  const map = L.useMap();
+  const map = useMap();
   useEffect(() => {
     map.setView(pos);
   }, [pos, map]);
