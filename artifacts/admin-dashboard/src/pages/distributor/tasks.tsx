@@ -12,10 +12,37 @@ export default function DistributorTasks() {
   const { user } = useAuth();
   const { data: tasks, isLoading } = useGetTasks({ distributorId: user?.id });
   const [selectedTask, setSelectedTask] = useState<any>(null);
+  const [location, setLocation] = useState<{lat: number, lng: number} | null>(null);
+
+  useState(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition((pos) => {
+        setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+      });
+    }
+  });
 
   if (isLoading) return <div className="p-8 text-center">جارٍ التحميل...</div>;
 
-  const pendingTasks = tasks?.filter((t: any) => t.status === "pending" || t.status === "in_progress") || [];
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    const R = 6371; // km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  };
+
+  const pendingTasks = (tasks?.filter((t: any) => t.status === "pending" || t.status === "in_progress") || [])
+    .map((t: any) => ({
+      ...t,
+      distance: location ? calculateDistance(location.lat, location.lng, t.storeLatitude, t.storeLongitude) : Infinity
+    }))
+    .sort((a: any, b: any) => a.distance - b.distance);
+
   const completedTasks = tasks?.filter((t: any) => t.status === "completed" || t.status === "failed") || [];
 
   return (
@@ -37,7 +64,21 @@ export default function DistributorTasks() {
               <div className={`absolute top-0 right-0 w-2 h-full ${task.status === "in_progress" ? "bg-blue-500" : "bg-amber-500"}`} />
 
               <div className="flex justify-between items-start mb-3">
-                <h3 className="font-bold text-lg text-slate-900">{task.storeName}</h3>
+                <div className="flex items-center gap-3">
+                  {task.storeImageUrl ? (
+                    <img src={task.storeImageUrl} alt={task.storeName} className="w-12 h-12 rounded-xl object-cover" />
+                  ) : (
+                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold">
+                      {task.storeName[0]}
+                    </div>
+                  )}
+                  <div>
+                    <h3 className="font-bold text-lg text-slate-900">{task.storeName}</h3>
+                    {location && (
+                      <p className="text-[10px] text-slate-500 font-bold">تبعد {task.distance.toFixed(1)} كلم</p>
+                    )}
+                  </div>
+                </div>
                 <Badge variant={task.status === "in_progress" ? "outline" : "secondary"} className="text-[10px]">
                   {task.status === "in_progress" ? "جاري التنفيذ" : "قيد الانتظار"}
                 </Badge>

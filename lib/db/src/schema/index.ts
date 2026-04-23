@@ -3,6 +3,7 @@ export * from "./distributors";
 export * from "./products";
 export * from "./stores";
 export * from "./tasks";
+export * from "./task_groups";
 export * from "./deliveries";
 export * from "./suggestions";
 export * from "./settlements";

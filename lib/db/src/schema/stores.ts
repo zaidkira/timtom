@@ -10,6 +10,7 @@ export const storesTable = pgTable("stores", {
   latitude: real("latitude").notNull(),
   longitude: real("longitude").notNull(),
   address: text("address"),
+  imageUrl: text("image_url"),
   debt: numeric("debt", { precision: 12, scale: 2 }).notNull().default("0"),
   totalVisits: integer("total_visits").notNull().default(0),
   lastVisit: timestamp("last_visit"),

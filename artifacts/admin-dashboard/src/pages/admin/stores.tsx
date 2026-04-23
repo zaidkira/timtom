@@ -71,9 +71,13 @@ export default function Stores() {
           <div key={store.id} className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-md transition-all">
             <div className="flex justify-between items-start mb-4">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-orange-50 text-orange-500 flex items-center justify-center">
-                  <StoreIcon className="w-6 h-6" />
-                </div>
+                {store.imageUrl ? (
+                  <img src={store.imageUrl} alt={store.name} className="w-12 h-12 rounded-xl object-cover" />
+                ) : (
+                  <div className="w-12 h-12 rounded-xl bg-orange-50 text-orange-500 flex items-center justify-center">
+                    <StoreIcon className="w-6 h-6" />
+                  </div>
+                )}
                 <div>
                   <h3 className="font-bold text-lg text-slate-900">{store.name}</h3>
                   <p className="text-sm text-slate-500">{store.ownerName}</p>
@@ -169,6 +173,7 @@ function StoreModal({ store, isOpen, onClose }: { store?: Store, isOpen: boolean
       ownerName: fd.get('ownerName') as string,
       phone: fd.get('phone') as string,
       address: fd.get('address') as string,
+      imageUrl: fd.get('imageUrl') as string,
       latitude: position[0],
       longitude: position[1],
     };
@@ -216,6 +221,11 @@ function StoreModal({ store, isOpen, onClose }: { store?: Store, isOpen: boolean
             <label className="text-sm font-bold">العنوان (اختياري)</label>
             <input name="address" defaultValue={store?.address || ''} className="w-full p-3 rounded-xl border border-slate-200 focus:border-primary outline-none" />
           </div>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-bold">رابط صورة المحل (اختياري)</label>
+          <input name="imageUrl" defaultValue={store?.imageUrl || ''} placeholder="https://..." className="w-full p-3 rounded-xl border border-slate-200 focus:border-primary outline-none" />
         </div>
         
         <div className="space-y-2">

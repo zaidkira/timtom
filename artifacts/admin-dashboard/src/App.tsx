@@ -18,6 +18,7 @@ import Deliveries from "@/pages/admin/deliveries";
 import Accounting from "@/pages/admin/accounting";
 import MapPage from "@/pages/admin/map";
 import Suggestions from "@/pages/admin/suggestions";
+import TaskGroups from "@/pages/admin/task-groups";
 
 import DistributorHome from "@/pages/distributor/home";
 import DistributorTasks from "@/pages/distributor/tasks";
@@ -94,6 +95,9 @@ function Router() {
       </Route>
       <Route path="/suggestions">
         <ProtectedRoute component={Suggestions} allowedRole="admin" />
+      </Route>
+      <Route path="/task-groups">
+        <ProtectedRoute component={TaskGroups} allowedRole="admin" />
       </Route>
 
       <Route path="/distributor">

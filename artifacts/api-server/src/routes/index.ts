@@ -10,6 +10,7 @@ import accountingRouter from "./accounting";
 import mapRouter from "./map";
 import suggestionsRouter from "./suggestions";
 import dashboardRouter from "./dashboard";
+import taskGroupsRouter from "./taskGroups";
 
 const router: IRouter = Router();
 
@@ -24,5 +25,6 @@ router.use("/accounting", accountingRouter);
 router.use("/map", mapRouter);
 router.use("/suggestions", suggestionsRouter);
 router.use("/dashboard", dashboardRouter);
+router.use("/task-groups", taskGroupsRouter);
 
 export default router;

@@ -28,6 +28,7 @@ async function getTaskFull(taskId: number) {
     storeName: store?.name ?? "Unknown store",
     storeLatitude: store?.latitude ?? 0,
     storeLongitude: store?.longitude ?? 0,
+    storeImageUrl: store?.imageUrl ?? null,
     totalAmount: parseFloat(task.totalAmount as string),
     items: task.items as Array<Record<string, unknown>>,
   };

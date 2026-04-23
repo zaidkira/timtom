@@ -19,6 +19,7 @@ const navItems = [
   { href: "/suggestions", label: "الاقتراحات", icon: Lightbulb },
   { href: "/accounting", label: "المحاسبة", icon: Calculator },
   { href: "/map", label: "الخريطة الشاملة", icon: Map },
+  { href: "/task-groups", label: "مجموعات المهام", icon: ListTodo },
 ];
 
 export function AdminLayout({ children }: { children: ReactNode }) {
