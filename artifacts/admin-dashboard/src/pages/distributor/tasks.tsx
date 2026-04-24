@@ -4,7 +4,7 @@ import { formatCurrency } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Navigation, Camera, CheckCircle2 } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 
@@ -12,35 +12,48 @@ export default function DistributorTasks() {
   const { user } = useAuth();
   const { data: tasks, isLoading } = useGetTasks({ distributorId: user?.id });
   const [selectedTask, setSelectedTask] = useState<any>(null);
-  const [location, setLocation] = useState<{lat: number, lng: number} | null>(null);
+  const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
 
-  useState(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition((pos) => {
-        setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-      });
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      setLocationError("المتصفح لا يدعم تحديد الموقع");
+      return;
     }
-  });
+
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setLocationError(null);
+      },
+      (err) => {
+        console.error("Location error:", err);
+        setLocationError("يرجى تفعيل الموقع الجغرافي لترتيب المهام حسب المسافة");
+      },
+      { enableHighAccuracy: true }
+    );
+
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, []);
 
   if (isLoading) return <div className="p-8 text-center">جارٍ التحميل...</div>;
 
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
     const R = 6371; // km
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = 
-      Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-      Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
   };
 
   const pendingTasks = (tasks?.filter((t: any) => t.status === "pending" || t.status === "in_progress") || [])
-    .map((t: any) => ({
-      ...t,
-      distance: location ? calculateDistance(location.lat, location.lng, t.storeLatitude, t.storeLongitude) : Infinity
-    }))
+    .map((t: any) => {
+      const dist = location ? calculateDistance(location.lat, location.lng, t.storeLatitude, t.storeLongitude) : 999999;
+      return { ...t, distance: dist };
+    })
     .sort((a: any, b: any) => a.distance - b.distance);
 
   const completedTasks = tasks?.filter((t: any) => t.status === "completed" || t.status === "failed") || [];
@@ -48,6 +61,13 @@ export default function DistributorTasks() {
   return (
     <div dir="rtl" className="space-y-6 pt-4 pb-24">
       <h2 className="text-2xl font-display font-bold px-2">المهام الحالية</h2>
+
+      {locationError && (
+        <div className="bg-amber-50 border border-amber-200 text-amber-700 px-4 py-3 rounded-2xl text-sm flex items-center gap-2 mx-2">
+          <Navigation className="w-4 h-4 animate-pulse" />
+          {locationError}
+        </div>
+      )}
 
       {pendingTasks.length === 0 ? (
         <div className="bg-white rounded-3xl p-8 text-center shadow-sm border border-slate-100">
