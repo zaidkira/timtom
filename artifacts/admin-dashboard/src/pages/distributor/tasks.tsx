@@ -84,18 +84,18 @@ export default function DistributorTasks() {
               <div className={`absolute top-0 right-0 w-2 h-full ${task.status === "in_progress" ? "bg-blue-500" : "bg-amber-500"}`} />
 
               <div className="flex justify-between items-start mb-3">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-4">
                   {task.storeImageUrl ? (
-                    <img src={task.storeImageUrl} alt={task.storeName} className="w-12 h-12 rounded-xl object-cover" />
+                    <img src={task.storeImageUrl} alt={task.storeName} className="w-16 h-16 rounded-2xl object-cover shadow-md border-2 border-white" />
                   ) : (
-                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold">
+                    <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-bold text-xl shadow-inner">
                       {task.storeName[0]}
                     </div>
                   )}
                   <div>
-                    <h3 className="font-bold text-lg text-slate-900">{task.storeName}</h3>
+                    <h3 className="font-bold text-xl text-slate-900">{task.storeName}</h3>
                     {location && (
-                      <p className="text-[10px] text-slate-500 font-bold">تبعد {task.distance.toFixed(1)} كلم</p>
+                      <p className="text-xs text-slate-500 font-medium">تبعد {task.distance.toFixed(1)} كلم</p>
                     )}
                   </div>
                 </div>
@@ -215,6 +215,20 @@ function DeliveryModal({ task, onClose }: { task: any, onClose: () => void }) {
   return (
     <Modal isOpen={true} onClose={onClose} title="تأكيد التسليم">
       <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="flex items-center gap-4 mb-6 p-2 bg-slate-50 rounded-2xl">
+          {task.storeImageUrl ? (
+            <img src={task.storeImageUrl} alt={task.storeName} className="w-20 h-20 rounded-xl object-cover shadow-sm" />
+          ) : (
+            <div className="w-20 h-20 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold text-2xl">
+              {task.storeName[0]}
+            </div>
+          )}
+          <div>
+            <h4 className="font-bold text-lg text-slate-900">{task.storeName}</h4>
+            <p className="text-sm text-slate-500">تأكيد استلام المبلغ</p>
+          </div>
+        </div>
+
         <div className="bg-emerald-50 text-emerald-700 p-4 rounded-xl text-center mb-6">
           <p className="text-sm font-semibold mb-1">المبلغ الإجمالي للمهمة</p>
           <p className="text-3xl font-bold">{formatCurrency(task.totalAmount)}</p>
