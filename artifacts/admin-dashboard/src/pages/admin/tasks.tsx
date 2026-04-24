@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 export default function Tasks() {
   const { data: tasks, isLoading } = useGetTasks();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [zoomedImage, setZoomedImage] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -73,7 +74,12 @@ export default function Tasks() {
             <div className="flex justify-between items-start mb-4 pb-4 border-b border-slate-100">
               <div className="flex items-center gap-3">
                 {(task as any).storeImageUrl ? (
-                  <img src={(task as any).storeImageUrl} alt={task.storeName} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
+                  <img 
+                    src={(task as any).storeImageUrl} 
+                    alt={task.storeName} 
+                    onClick={() => setZoomedImage((task as any).storeImageUrl || null)}
+                    className="w-12 h-12 rounded-xl object-cover flex-shrink-0 cursor-zoom-in hover:scale-105 transition-transform" 
+                  />
                 ) : (
                   <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
                     <Store className="w-6 h-6 text-primary" />
@@ -128,6 +134,28 @@ export default function Tasks() {
       </div>
 
       {isCreateOpen && <CreateTaskModal onClose={() => setIsCreateOpen(false)} />}
+
+      {/* Lightbox Overlay */}
+      {zoomedImage && (
+        <div 
+          className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 cursor-pointer"
+          onClick={() => setZoomedImage(null)}
+        >
+          <div className="relative max-w-full max-h-full" onClick={e => e.stopPropagation()}>
+            <img 
+              src={zoomedImage} 
+              alt="Zoomed Store" 
+              className="max-w-full max-h-[90vh] rounded-2xl shadow-2xl"
+            />
+            <button 
+              className="absolute -top-4 -right-4 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg font-bold text-xl hover:bg-slate-100 transition-colors"
+              onClick={() => setZoomedImage(null)}
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

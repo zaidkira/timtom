@@ -24,6 +24,7 @@ export default function Stores() {
   const { data: stores, isLoading } = useGetStores();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingStore, setEditingStore] = useState<Store | null>(null);
+  const [zoomedImage, setZoomedImage] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const deleteStoreMutation = useDeleteStore();
@@ -72,7 +73,12 @@ export default function Stores() {
             <div className="flex justify-between items-start mb-4">
               <div className="flex items-center gap-3">
                 {store.imageUrl ? (
-                  <img src={store.imageUrl} alt={store.name} className="w-12 h-12 rounded-xl object-cover" />
+                  <img 
+                    src={store.imageUrl} 
+                    alt={store.name} 
+                    onClick={() => setZoomedImage(store.imageUrl || null)}
+                    className="w-12 h-12 rounded-xl object-cover cursor-zoom-in hover:scale-105 transition-transform" 
+                  />
                 ) : (
                   <div className="w-12 h-12 rounded-xl bg-orange-50 text-orange-500 flex items-center justify-center">
                     <StoreIcon className="w-6 h-6" />
@@ -133,6 +139,28 @@ export default function Stores() {
 
       <StoreModal isOpen={isCreateOpen} onClose={() => setIsCreateOpen(false)} />
       {editingStore && <StoreModal store={editingStore} isOpen={true} onClose={() => setEditingStore(null)} />}
+
+      {/* Lightbox Overlay */}
+      {zoomedImage && (
+        <div 
+          className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 cursor-pointer"
+          onClick={() => setZoomedImage(null)}
+        >
+          <div className="relative max-w-full max-h-full" onClick={e => e.stopPropagation()}>
+            <img 
+              src={zoomedImage} 
+              alt="Zoomed Store" 
+              className="max-w-full max-h-[90vh] rounded-2xl shadow-2xl"
+            />
+            <button 
+              className="absolute -top-4 -right-4 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg font-bold text-xl hover:bg-slate-100 transition-colors"
+              onClick={() => setZoomedImage(null)}
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

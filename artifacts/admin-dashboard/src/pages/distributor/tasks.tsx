@@ -12,6 +12,7 @@ export default function DistributorTasks() {
   const { user } = useAuth();
   const { data: tasks, isLoading } = useGetTasks({ distributorId: user?.id });
   const [selectedTask, setSelectedTask] = useState<any>(null);
+  const [zoomedImage, setZoomedImage] = useState<string | null>(null);
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
 
@@ -86,7 +87,12 @@ export default function DistributorTasks() {
               <div className="flex justify-between items-start mb-3">
                 <div className="flex items-center gap-4">
                   {task.storeImageUrl ? (
-                    <img src={task.storeImageUrl} alt={task.storeName} className="w-16 h-16 rounded-2xl object-cover shadow-md border-2 border-white" />
+                    <img 
+                      src={task.storeImageUrl} 
+                      alt={task.storeName} 
+                      onClick={() => setZoomedImage(task.storeImageUrl)}
+                      className="w-16 h-16 rounded-2xl object-cover shadow-md border-2 border-white cursor-zoom-in hover:scale-105 transition-transform" 
+                    />
                   ) : (
                     <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-bold text-xl shadow-inner">
                       {task.storeName[0]}
@@ -163,6 +169,28 @@ export default function DistributorTasks() {
       )}
 
       {selectedTask && <DeliveryModal task={selectedTask} onClose={() => setSelectedTask(null)} />}
+
+      {/* Lightbox Overlay */}
+      {zoomedImage && (
+        <div 
+          className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setZoomedImage(null)}
+        >
+          <div className="relative max-w-full max-h-full">
+            <img 
+              src={zoomedImage} 
+              alt="Zoomed Store" 
+              className="max-w-full max-h-[90vh] rounded-2xl shadow-2xl"
+            />
+            <button 
+              className="absolute -top-4 -right-4 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg font-bold text-xl"
+              onClick={() => setZoomedImage(null)}
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
