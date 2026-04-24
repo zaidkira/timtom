@@ -135,6 +135,7 @@ export interface Store {
   latitude: number;
   longitude: number;
   address?: string | null;
+  imageUrl?: string | null;
   debt: number;
   totalVisits: number;
   lastVisit?: string | null;
@@ -148,6 +149,7 @@ export interface CreateStoreRequest {
   latitude: number;
   longitude: number;
   address?: string;
+  imageUrl?: string;
 }
 
 export interface UpdateStoreRequest {
@@ -157,6 +159,7 @@ export interface UpdateStoreRequest {
   latitude?: number;
   longitude?: number;
   address?: string;
+  imageUrl?: string;
 }
 
 export interface TaskItem {
