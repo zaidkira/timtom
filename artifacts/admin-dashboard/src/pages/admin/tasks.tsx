@@ -71,12 +71,18 @@ export default function Tasks() {
         {tasks?.map((task) => (
           <div key={task.id} className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col">
             <div className="flex justify-between items-start mb-4 pb-4 border-b border-slate-100">
-              <div>
-                <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
-                  <Store className="w-5 h-5 text-primary" />
-                  {task.storeName}
-                </h3>
-                <p className="text-sm text-slate-500 mt-1">الموزع: {task.distributorName}</p>
+              <div className="flex items-center gap-3">
+                {(task as any).storeImageUrl ? (
+                  <img src={(task as any).storeImageUrl} alt={task.storeName} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
+                ) : (
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <Store className="w-6 h-6 text-primary" />
+                  </div>
+                )}
+                <div>
+                  <h3 className="font-bold text-lg text-slate-900">{task.storeName}</h3>
+                  <p className="text-sm text-slate-500">الموزع: {task.distributorName}</p>
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant={statusColors[task.status] as any}>{statusLabels[task.status]}</Badge>

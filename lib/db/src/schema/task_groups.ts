@@ -8,8 +8,8 @@ export const taskGroupsTable = pgTable("task_groups", {
   name: text("name").notNull(),
   distributorId: integer("distributor_id").notNull().references(() => distributorsTable.id),
   storeIds: integer("store_ids").array().notNull(),
-  recurrence: text("recurrence", { enum: ["none", "weekly"] }).notNull().default("none"),
-  dayOfWeek: integer("day_of_week"), // 0 = Sunday, 1 = Monday, etc.
+  recurrence: text("recurrence", { enum: ["none", "weekly"] }).notNull().default("weekly"),
+  daysOfWeek: integer("days_of_week").array().notNull().default([1]),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
