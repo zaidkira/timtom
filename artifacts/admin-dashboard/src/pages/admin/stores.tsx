@@ -165,6 +165,19 @@ function StoreModal({ store, isOpen, onClose }: { store?: Store, isOpen: boolean
     store ? [store.latitude, store.longitude] : [36.7525, 3.04197]
   );
   
+  const [photoBase64, setPhotoBase64] = useState<string>(store?.imageUrl || "");
+
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        setPhotoBase64(ev.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+  
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
@@ -173,7 +186,7 @@ function StoreModal({ store, isOpen, onClose }: { store?: Store, isOpen: boolean
       ownerName: fd.get('ownerName') as string,
       phone: fd.get('phone') as string,
       address: fd.get('address') as string,
-      imageUrl: fd.get('imageUrl') as string,
+      imageUrl: photoBase64,
       latitude: position[0],
       longitude: position[1],
     };
@@ -224,8 +237,21 @@ function StoreModal({ store, isOpen, onClose }: { store?: Store, isOpen: boolean
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-bold">رابط صورة المحل (اختياري)</label>
-          <input name="imageUrl" defaultValue={store?.imageUrl || ''} placeholder="https://..." className="w-full p-3 rounded-xl border border-slate-200 focus:border-primary outline-none" />
+          <label className="text-sm font-bold flex items-center gap-2">
+            <Plus className="w-4 h-4 text-primary" />
+            صورة المحل (اختياري)
+          </label>
+          <label className="w-full h-32 rounded-2xl bg-slate-50 border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-400 cursor-pointer hover:bg-slate-100 transition-colors relative overflow-hidden">
+            <input type="file" accept="image/*" onChange={handlePhotoSelect} className="hidden" />
+            {photoBase64 ? (
+              <img src={photoBase64} alt="صورة المحل" className="absolute inset-0 w-full h-full object-cover" />
+            ) : (
+              <>
+                <Edit2 className="w-8 h-8 mb-2" />
+                <span className="text-xs">اضغط لاختيار صورة للمحل</span>
+              </>
+            )}
+          </label>
         </div>
         
         <div className="space-y-2">
