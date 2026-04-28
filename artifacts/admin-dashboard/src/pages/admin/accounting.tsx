@@ -6,6 +6,7 @@ import {
 } from "@workspace/api-client-react";
 import { TrendingUp, TrendingDown, Building2, Users, DollarSign, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
 
 export default function Accounting() {
   const { toast } = useToast();
@@ -14,7 +15,8 @@ export default function Accounting() {
   const [settleDistId, setSettleDistId] = useState<number | null>(null);
   const [settleAmount, setSettleAmount] = useState("");
   const [settleNotes, setSettleNotes] = useState("");
-  const [activeTab, setActiveTab] = useState<"stores" | "distributors">("stores");
+  const [activeTab, setActiveTab] = useState<"stores" | "distributors" | "daily">("stores");
+  const [expandedDays, setExpandedDays] = useState<string[]>([]);
 
   const { data: summary } = useQuery({
     queryKey: [...getGetAccountingSummaryQueryKey(), period],
@@ -30,6 +32,21 @@ export default function Accounting() {
     queryKey: getGetDistributorDebtsQueryKey(),
     queryFn: getDistributorDebts,
   });
+
+  const { data: dailyReport = [] } = useQuery({
+    queryKey: ["/api/accounting/daily-report"],
+    queryFn: async () => {
+      const res = await fetch("/api/accounting/daily-report");
+      if (!res.ok) throw new Error("Failed to fetch");
+      return res.json();
+    }
+  });
+
+  const toggleDay = (date: string) => {
+    setExpandedDays(prev => 
+      prev.includes(date) ? prev.filter(d => d !== date) : [...prev, date]
+    );
+  };
 
   const settle = useMutation({
     mutationFn: ({ id, amount, notes }: { id: number; amount: number; notes: string }) =>
@@ -88,6 +105,10 @@ export default function Accounting() {
             className={`flex-1 py-4 text-sm font-semibold transition-colors ${activeTab === "distributors" ? "text-blue-600 border-b-2 border-blue-600" : "text-slate-500 hover:text-slate-700"}`}>
             ديون الموزعين ({distributorDebts.length})
           </button>
+          <button onClick={() => setActiveTab("daily")}
+            className={`flex-1 py-4 text-sm font-semibold transition-colors ${activeTab === "daily" ? "text-blue-600 border-b-2 border-blue-600" : "text-slate-500 hover:text-slate-700"}`}>
+            تقرير يومي
+          </button>
         </div>
 
         <div className="p-4">
@@ -110,7 +131,7 @@ export default function Accounting() {
                 ))}
               </div>
             )
-          ) : (
+          ) : activeTab === "distributors" ? (
             distributorDebts.length === 0 ? (
               <p className="text-center py-10 text-slate-400">لا توجد ديون</p>
             ) : (
@@ -136,6 +157,55 @@ export default function Accounting() {
                 ))}
               </div>
             )
+          ) : (
+            <div className="space-y-4">
+              {dailyReport.length === 0 ? (
+                <p className="text-center py-10 text-slate-400">لا توجد مبيعات مسجلة</p>
+              ) : (
+                dailyReport.map((day: any) => (
+                  <div key={day.date} className="border border-slate-100 rounded-2xl overflow-hidden shadow-sm">
+                    <button 
+                      onClick={() => toggleDay(day.date)}
+                      className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-4">
+                        <p className="font-bold text-slate-800">{new Date(day.date).toLocaleDateString('ar-DZ', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                        <Badge variant="secondary" className="bg-blue-100 text-blue-700">{day.count} عمليات</Badge>
+                      </div>
+                      <div className="text-left">
+                        <p className="text-lg font-bold text-green-600">{day.totalCollected.toLocaleString("ar-DZ")} دج</p>
+                      </div>
+                    </button>
+                    
+                    {expandedDays.includes(day.date) && (
+                      <div className="p-4 bg-white border-t border-slate-100 space-y-3">
+                        {day.transactions.map((t: any) => (
+                          <div key={t.id} className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                            <div className="flex justify-between items-start mb-2">
+                              <div>
+                                <p className="font-bold text-slate-800">{t.storeName}</p>
+                                <p className="text-xs text-slate-500">بواسطة: {t.distributorName} · {t.time}</p>
+                              </div>
+                              <p className="font-bold text-green-600">{t.amount.toLocaleString("ar-DZ")} دج</p>
+                            </div>
+                            <div className="text-xs text-slate-600 bg-white p-2 rounded-lg border border-slate-100">
+                              <p className="font-semibold mb-1">المنتجات:</p>
+                              <div className="flex flex-wrap gap-2">
+                                {t.items.map((item: any, idx: number) => (
+                                  <span key={idx} className="bg-slate-100 px-2 py-0.5 rounded text-[10px]">
+                                    {item.productName} (x{item.quantity})
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
           )}
         </div>
       </div>

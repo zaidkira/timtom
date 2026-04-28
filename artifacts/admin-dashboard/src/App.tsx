@@ -24,6 +24,7 @@ import DistributorHome from "@/pages/distributor/home";
 import DistributorTasks from "@/pages/distributor/tasks";
 import DistributorMap from "@/pages/distributor/map";
 import SuggestStore from "@/pages/distributor/suggest";
+import DistributorStores from "@/pages/distributor/stores";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -111,6 +112,9 @@ function Router() {
       </Route>
       <Route path="/distributor/suggest">
         <ProtectedRoute component={SuggestStore} allowedRole="distributor" />
+      </Route>
+      <Route path="/distributor/stores">
+        <ProtectedRoute component={DistributorStores} allowedRole="distributor" />
       </Route>
 
       <Route>

@@ -2,7 +2,7 @@ import { ReactNode, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { 
-  Home, Map as MapIcon, ListTodo, PlusCircle, LogOut, Package
+  Home, Map as MapIcon, ListTodo, PlusCircle, LogOut, Store
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -98,6 +98,7 @@ export function DistributorLayout({ children }: { children: ReactNode }) {
         <div className="max-w-lg mx-auto flex justify-between items-center px-6 py-3">
           <NavButton href="/distributor" icon={Home} label="الرئيسية" active={location === "/distributor"} />
           <NavButton href="/distributor/tasks" icon={ListTodo} label="المهام" active={location.includes("/distributor/tasks")} />
+          <NavButton href="/distributor/stores" icon={Store} label="المحلات" active={location.includes("/distributor/stores")} />
           <NavButton href="/distributor/map" icon={MapIcon} label="الخريطة" active={location.includes("/distributor/map")} />
           <NavButton href="/distributor/suggest" icon={PlusCircle} label="اقتراح" active={location.includes("/distributor/suggest")} />
         </div>

@@ -140,4 +140,52 @@ router.post("/settle/:distributorId", requireRole("admin"), async (req, res) => 
   res.json({ message: "Account settled", remainingDebt: newDebt });
 });
 
+router.get("/daily-report", requireRole("admin"), async (_req, res) => {
+  const deliveries = await db
+    .select({
+      id: deliveriesTable.id,
+      amountCollected: deliveriesTable.amountCollected,
+      deliveredAt: deliveriesTable.deliveredAt,
+      storeName: storesTable.name,
+      distributorFirstName: usersTable.firstName,
+      distributorLastName: usersTable.lastName,
+      taskItems: tasksTable.items,
+    })
+    .from(deliveriesTable)
+    .innerJoin(storesTable, eq(deliveriesTable.storeId, storesTable.id))
+    .innerJoin(distributorsTable, eq(deliveriesTable.distributorId, distributorsTable.id))
+    .innerJoin(usersTable, eq(distributorsTable.userId, usersTable.id))
+    .innerJoin(tasksTable, eq(deliveriesTable.taskId, tasksTable.id))
+    .orderBy(sql`${deliveriesTable.deliveredAt} DESC`);
+
+  const groupedByDay: Record<string, any> = {};
+
+  for (const d of deliveries) {
+    const date = new Date(d.deliveredAt).toISOString().split("T")[0];
+    if (!groupedByDay[date]) {
+      groupedByDay[date] = {
+        date,
+        totalCollected: 0,
+        count: 0,
+        transactions: [],
+      };
+    }
+    groupedByDay[date].totalCollected += parseFloat(d.amountCollected as string);
+    groupedByDay[date].count += 1;
+    groupedByDay[date].transactions.push({
+      id: d.id,
+      storeName: d.storeName,
+      distributorName: `${d.distributorFirstName} ${d.distributorLastName}`,
+      amount: parseFloat(d.amountCollected as string),
+      items: d.taskItems,
+      time: new Date(d.deliveredAt).toLocaleTimeString("ar-DZ", {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+    });
+  }
+
+  res.json(Object.values(groupedByDay));
+});
+
 export default router;
