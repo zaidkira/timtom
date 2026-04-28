@@ -1,25 +1,24 @@
-import { Router } from "express";
-import { db } from "@workspace/db";
-import { storeGroupsTable } from "@workspace/db/schema";
+import { Router, type IRouter } from "express";
+import { db, storeGroupsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
-import { z } from "zod";
 
-export const storeGroupsRouter = Router();
+const router: IRouter = Router();
 
-storeGroupsRouter.get("/", async (req, res, next) => {
+router.get("/", async (req, res, next) => {
   try {
-    const groups = await db.query.storeGroupsTable.findMany();
+    const groups = await db.select().from(storeGroupsTable);
     res.json(groups);
   } catch (error) {
     next(error);
   }
 });
 
-storeGroupsRouter.post("/", async (req, res, next) => {
+router.post("/", async (req, res, next) => {
   try {
     const { name } = req.body;
     if (!name) {
-      return res.status(400).json({ error: "Validation Error", message: "Name is required" });
+      res.status(400).json({ error: "Validation Error", message: "Name is required" });
+      return;
     }
 
     const [group] = await db.insert(storeGroupsTable).values({ name }).returning();
@@ -29,17 +28,19 @@ storeGroupsRouter.post("/", async (req, res, next) => {
   }
 });
 
-storeGroupsRouter.put("/:id", async (req, res, next) => {
+router.put("/:id", async (req, res, next) => {
   try {
     const id = parseInt(req.params.id, 10);
     const { name } = req.body;
 
     if (isNaN(id)) {
-      return res.status(400).json({ error: "Validation Error", message: "Invalid ID" });
+      res.status(400).json({ error: "Validation Error", message: "Invalid ID" });
+      return;
     }
 
     if (!name) {
-      return res.status(400).json({ error: "Validation Error", message: "Name is required" });
+      res.status(400).json({ error: "Validation Error", message: "Name is required" });
+      return;
     }
 
     const [group] = await db
@@ -49,7 +50,8 @@ storeGroupsRouter.put("/:id", async (req, res, next) => {
       .returning();
 
     if (!group) {
-      return res.status(404).json({ error: "Not Found", message: "Store group not found" });
+      res.status(404).json({ error: "Not Found", message: "Store group not found" });
+      return;
     }
 
     res.json(group);
@@ -58,11 +60,12 @@ storeGroupsRouter.put("/:id", async (req, res, next) => {
   }
 });
 
-storeGroupsRouter.delete("/:id", async (req, res, next) => {
+router.delete("/:id", async (req, res, next) => {
   try {
     const id = parseInt(req.params.id, 10);
     if (isNaN(id)) {
-      return res.status(400).json({ error: "Validation Error", message: "Invalid ID" });
+      res.status(400).json({ error: "Validation Error", message: "Invalid ID" });
+      return;
     }
 
     await db.delete(storeGroupsTable).where(eq(storeGroupsTable.id, id));
@@ -71,3 +74,5 @@ storeGroupsRouter.delete("/:id", async (req, res, next) => {
     next(error);
   }
 });
+
+export default router;
