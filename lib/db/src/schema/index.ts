@@ -1,6 +1,7 @@
 export * from "./users";
 export * from "./distributors";
 export * from "./products";
+export * from "./store_groups";
 export * from "./stores";
 export * from "./tasks";
 export * from "./task_groups";

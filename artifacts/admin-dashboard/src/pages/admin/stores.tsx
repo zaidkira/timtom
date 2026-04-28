@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from "react";
-import { useGetStores, useCreateStore, useUpdateStore, useDeleteStore, Store } from "@workspace/api-client-react";
+import { useGetStores, useCreateStore, useUpdateStore, useDeleteStore, Store, useGetStoreGroups, useCreateStoreGroup, useUpdateStoreGroup, useDeleteStoreGroup, StoreGroup } from "@workspace/api-client-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { Modal } from "@/components/ui/modal";
-import { Plus, Edit2, MapPin, Store as StoreIcon, Trash2 } from "lucide-react";
+import { Plus, Edit2, MapPin, Store as StoreIcon, Trash2, Folder, Save } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet";
@@ -22,6 +22,8 @@ L.Icon.Default.mergeOptions({
 
 export default function Stores() {
   const { data: stores, isLoading } = useGetStores();
+  const { data: groups } = useGetStoreGroups();
+  const [isGroupsOpen, setIsGroupsOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingStore, setEditingStore] = useState<Store | null>(null);
   const [zoomedImage, setZoomedImage] = useState<string | null>(null);
@@ -58,13 +60,22 @@ export default function Stores() {
           <h1 className="text-2xl font-display font-bold">إدارة المحلات</h1>
           <p className="text-slate-500">سجل المحلات التجارية ومواقعها وديونها</p>
         </div>
-        <button 
-          onClick={() => setIsCreateOpen(true)}
-          className="bg-primary text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-primary/90 shadow-lg shadow-primary/25 hover:-translate-y-0.5 transition-all"
-        >
-          <Plus className="w-5 h-5" />
-          إضافة محل
-        </button>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => setIsGroupsOpen(true)}
+            className="bg-slate-100 text-slate-700 px-4 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-slate-200 transition-all"
+          >
+            <Folder className="w-5 h-5" />
+            المجموعات
+          </button>
+          <button 
+            onClick={() => setIsCreateOpen(true)}
+            className="bg-primary text-white px-4 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-primary/90 shadow-lg shadow-primary/25 hover:-translate-y-0.5 transition-all"
+          >
+            <Plus className="w-5 h-5" />
+            إضافة محل
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -86,7 +97,10 @@ export default function Stores() {
                 )}
                 <div>
                   <h3 className="font-bold text-lg text-slate-900">{store.name}</h3>
-                  <p className="text-sm text-slate-500">{store.ownerName}</p>
+                  <p className="text-sm text-slate-500">
+                    {store.ownerName} 
+                    {groups?.find(g => g.id === store.groupId) && ` • ${groups.find(g => g.id === store.groupId)?.name}`}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-1">
@@ -137,8 +151,9 @@ export default function Stores() {
         ))}
       </div>
 
-      <StoreModal isOpen={isCreateOpen} onClose={() => setIsCreateOpen(false)} />
-      {editingStore && <StoreModal store={editingStore} isOpen={true} onClose={() => setEditingStore(null)} />}
+      <StoreModal isOpen={isCreateOpen} onClose={() => setIsCreateOpen(false)} groups={groups} />
+      {editingStore && <StoreModal store={editingStore} isOpen={true} onClose={() => setEditingStore(null)} groups={groups} />}
+      <StoreGroupsModal isOpen={isGroupsOpen} onClose={() => setIsGroupsOpen(false)} groups={groups} />
 
       {/* Lightbox Overlay */}
       {zoomedImage && (
@@ -182,7 +197,7 @@ function MapRecenter({ pos }: { pos: [number, number] }) {
   return null;
 }
 
-function StoreModal({ store, isOpen, onClose }: { store?: Store, isOpen: boolean, onClose: () => void }) {
+function StoreModal({ store, isOpen, onClose, groups }: { store?: Store, isOpen: boolean, onClose: () => void, groups?: StoreGroup[] }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const createMutation = useCreateStore();
@@ -217,6 +232,7 @@ function StoreModal({ store, isOpen, onClose }: { store?: Store, isOpen: boolean
       imageUrl: photoBase64,
       latitude: position[0],
       longitude: position[1],
+      groupId: fd.get('groupId') ? parseInt(fd.get('groupId') as string, 10) : undefined,
     };
     
     if (store) {
@@ -262,6 +278,15 @@ function StoreModal({ store, isOpen, onClose }: { store?: Store, isOpen: boolean
             <label className="text-sm font-bold">العنوان (اختياري)</label>
             <input name="address" defaultValue={store?.address || ''} className="w-full p-3 rounded-xl border border-slate-200 focus:border-primary outline-none" />
           </div>
+          <div className="space-y-2">
+            <label className="text-sm font-bold">المجموعة</label>
+            <select name="groupId" defaultValue={store?.groupId || ''} className="w-full p-3 rounded-xl border border-slate-200 focus:border-primary outline-none bg-white">
+              <option value="">بدون مجموعة</option>
+              {groups?.map(g => (
+                <option key={g.id} value={g.id}>{g.name}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <div className="space-y-2">
@@ -301,10 +326,17 @@ function StoreModal({ store, isOpen, onClose }: { store?: Store, isOpen: boolean
                     toast({ title: "تم تحديد موقعك بنجاح" });
                     if (btn) btn.innerText = "استخدام موقعي الحالي";
                   },
-                  () => {
-                    toast({ title: "فشل تحديد الموقع", variant: "destructive" });
+                  (err) => {
+                    console.error("Geolocation error:", err);
+                    let errMsg = "فشل تحديد الموقع";
+                    if (err.code === 1) errMsg += ": الرجاء السماح للمتصفح بالوصول لموقعك";
+                    else if (err.code === 2) errMsg += ": الموقع غير متوفر حالياً";
+                    else if (err.code === 3) errMsg += ": انتهى وقت الطلب (Timeout)";
+                    else errMsg += `: ${err.message}`;
+                    toast({ title: errMsg, variant: "destructive" });
                     if (btn) btn.innerText = "استخدام موقعي الحالي";
-                  }
+                  },
+                  { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
                 );
               }}
               id="get-admin-loc"
@@ -329,6 +361,116 @@ function StoreModal({ store, isOpen, onClose }: { store?: Store, isOpen: boolean
           {store ? "حفظ التعديلات" : "إضافة المحل"}
         </button>
       </form>
+    </Modal>
+  );
+}
+
+function StoreGroupsModal({ isOpen, onClose, groups }: { isOpen: boolean, onClose: () => void, groups?: StoreGroup[] }) {
+  const createMutation = useCreateStoreGroup();
+  const updateMutation = useUpdateStoreGroup();
+  const deleteMutation = useDeleteStoreGroup();
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editName, setEditName] = useState("");
+  const { toast } = useToast();
+
+  const handleCreate = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    const name = fd.get("name") as string;
+    if (!name) return;
+
+    createMutation.mutate({ data: { name } }, {
+      onSuccess: () => {
+        toast({ title: "تم الإضافة بنجاح" });
+        (e.target as HTMLFormElement).reset();
+      }
+    });
+  };
+
+  const handleUpdate = (id: number) => {
+    if (!editName) return;
+    updateMutation.mutate({ id, data: { name: editName } }, {
+      onSuccess: () => {
+        toast({ title: "تم التعديل بنجاح" });
+        setEditingId(null);
+      }
+    });
+  };
+
+  const handleDelete = (id: number) => {
+    if (!window.confirm("هل أنت متأكد من حذف هذه المجموعة؟")) return;
+    deleteMutation.mutate({ id }, {
+      onSuccess: () => {
+        toast({ title: "تم الحذف بنجاح" });
+      }
+    });
+  };
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="إدارة المجموعات" className="max-w-xl">
+      <div className="space-y-6">
+        <form onSubmit={handleCreate} className="flex gap-2">
+          <input 
+            name="name" 
+            placeholder="اسم المجموعة الجديدة..." 
+            required 
+            className="flex-1 p-3 rounded-xl border border-slate-200 focus:border-primary outline-none" 
+          />
+          <button 
+            disabled={createMutation.isPending}
+            className="bg-primary text-white px-6 rounded-xl font-bold hover:bg-primary/90 disabled:opacity-50"
+          >
+            إضافة
+          </button>
+        </form>
+
+        <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-2">
+          {groups?.length === 0 && (
+            <p className="text-center text-slate-500 py-4">لا توجد مجموعات حالياً</p>
+          )}
+          {groups?.map(g => (
+            <div key={g.id} className="flex items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-100">
+              {editingId === g.id ? (
+                <div className="flex flex-1 gap-2 mr-2">
+                  <input 
+                    autoFocus
+                    value={editName}
+                    onChange={e => setEditName(e.target.value)}
+                    className="flex-1 p-2 rounded-lg border border-slate-200 outline-none"
+                  />
+                  <button onClick={() => handleUpdate(g.id)} className="text-primary hover:bg-primary/10 p-2 rounded-lg">
+                    <Save className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => setEditingId(null)} className="text-slate-500 hover:bg-slate-200 p-2 rounded-lg text-sm font-bold">
+                    إلغاء
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <span className="font-bold text-slate-700">{g.name}</span>
+                  <div className="flex items-center gap-1">
+                    <button 
+                      onClick={() => {
+                        setEditingId(g.id);
+                        setEditName(g.name);
+                      }} 
+                      className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button 
+                      onClick={() => handleDelete(g.id)}
+                      className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
     </Modal>
   );
 }

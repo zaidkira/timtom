@@ -25,7 +25,7 @@ router.get("/:id", requireRole("admin", "distributor"), async (req, res) => {
 });
 
 router.post("/", requireRole("admin"), async (req, res) => {
-  const { name, ownerName, phone, latitude, longitude, address, imageUrl } = req.body;
+  const { name, ownerName, phone, latitude, longitude, address, imageUrl, groupId } = req.body;
   if (!name || !ownerName || !phone || latitude == null || longitude == null) {
     res.status(400).json({ error: "validation_error", message: "Missing required fields" });
     return;
@@ -33,7 +33,7 @@ router.post("/", requireRole("admin"), async (req, res) => {
 
   const [store] = await db
     .insert(storesTable)
-    .values({ name, ownerName, phone, latitude, longitude, address, imageUrl })
+    .values({ name, ownerName, phone, latitude, longitude, address, imageUrl, groupId })
     .returning();
 
   res.status(201).json({ ...store, debt: parseFloat(store.debt) });
@@ -41,7 +41,7 @@ router.post("/", requireRole("admin"), async (req, res) => {
 
 router.put("/:id", requireRole("admin"), async (req, res) => {
   const id = Number.parseInt(String(req.params.id), 10);
-  const { name, ownerName, phone, latitude, longitude, address, imageUrl } = req.body;
+  const { name, ownerName, phone, latitude, longitude, address, imageUrl, groupId } = req.body;
   const updates: Record<string, unknown> = {};
   if (name !== undefined) updates.name = name;
   if (ownerName !== undefined) updates.ownerName = ownerName;
@@ -50,6 +50,7 @@ router.put("/:id", requireRole("admin"), async (req, res) => {
   if (longitude !== undefined) updates.longitude = longitude;
   if (address !== undefined) updates.address = address;
   if (imageUrl !== undefined) updates.imageUrl = imageUrl;
+  if (groupId !== undefined) updates.groupId = groupId;
 
   const [store] = await db.update(storesTable).set(updates).where(eq(storesTable.id, id)).returning();
   if (!store) {
