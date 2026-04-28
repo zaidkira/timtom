@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getAccountingSummary, getStoreDebts, getDistributorDebts, settleDistributorAccount,
-  getGetAccountingSummaryQueryKey, getGetStoreDebtsQueryKey, getGetDistributorDebtsQueryKey
+  getGetAccountingSummaryQueryKey, getGetStoreDebtsQueryKey, getGetDistributorDebtsQueryKey,
+  customFetch
 } from "@workspace/api-client-react";
 import { TrendingUp, TrendingDown, Building2, Users, DollarSign, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -35,11 +36,7 @@ export default function Accounting() {
 
   const { data: dailyReport = [] } = useQuery({
     queryKey: ["/api/accounting/daily-report"],
-    queryFn: async () => {
-      const res = await fetch("/api/accounting/daily-report");
-      if (!res.ok) throw new Error("Failed to fetch");
-      return res.json();
-    }
+    queryFn: () => customFetch<any[]>("/api/accounting/daily-report"),
   });
 
   const toggleDay = (date: string) => {

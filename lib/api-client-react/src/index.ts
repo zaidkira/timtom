@@ -1,4 +1,4 @@
 export * from "./generated/api";
 export * from "./store-groups";
-export { setBaseUrl, setAuthTokenGetter } from "./custom-fetch";
-export type { AuthTokenGetter } from "./custom-fetch";
+export { setBaseUrl, setAuthTokenGetter, customFetch } from "./custom-fetch";
+export type { AuthTokenGetter, ErrorType } from "./custom-fetch";
