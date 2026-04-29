@@ -3,10 +3,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getAccountingSummary, getStoreDebts, getDistributorDebts, settleDistributorAccount,
   getGetAccountingSummaryQueryKey, getGetStoreDebtsQueryKey, getGetDistributorDebtsQueryKey,
-  customFetch,
-  AccountingSummary, StoreDebt, DistributorDebt
+  useGetDailyReport,
+  AccountingSummary, StoreDebt, DistributorDebt, DailyReportItem,
+  ErrorType
 } from "@workspace/api-client-react";
-import { TrendingUp, TrendingDown, Building2, Users, DollarSign, CheckCircle } from "lucide-react";
+import { TrendingUp, TrendingDown, Building2, Users, DollarSign, CheckCircle, ChevronDown, ChevronUp, Calendar } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 
@@ -20,25 +21,22 @@ export default function Accounting() {
   const [activeTab, setActiveTab] = useState<"stores" | "distributors" | "daily">("stores");
   const [expandedDays, setExpandedDays] = useState<string[]>([]);
 
-  const { data: summary } = useQuery<AccountingSummary>({
-    queryKey: [...getGetAccountingSummaryQueryKey(), period],
+  const { data: summary } = useQuery<AccountingSummary, ErrorType<unknown>>({
+    queryKey: getGetAccountingSummaryQueryKey({ period }),
     queryFn: () => getAccountingSummary({ period }),
   });
 
-  const { data: storeDebts = [] } = useQuery<StoreDebt[]>({
+  const { data: storeDebts = [] } = useQuery<StoreDebt[], ErrorType<unknown>>({
     queryKey: getGetStoreDebtsQueryKey(),
     queryFn: getStoreDebts,
   });
 
-  const { data: distributorDebts = [] } = useQuery<DistributorDebt[]>({
+  const { data: distributorDebts = [] } = useQuery<DistributorDebt[], ErrorType<unknown>>({
     queryKey: getGetDistributorDebtsQueryKey(),
     queryFn: getDistributorDebts,
   });
 
-  const { data: dailyReport = [] } = useQuery({
-    queryKey: ["/api/accounting/daily-report"],
-    queryFn: () => customFetch<any[]>("/api/accounting/daily-report"),
-  });
+  const { data: dailyReport = [] } = useGetDailyReport();
 
   const toggleDay = (date: string) => {
     setExpandedDays(prev => 

@@ -251,6 +251,51 @@ export const DeleteProductResponse = zod.object({
 });
 
 /**
+ * @summary Get all store groups
+ */
+export const GetStoreGroupsResponseItem = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  createdAt: zod.coerce.date(),
+});
+export const GetStoreGroupsResponse = zod.array(GetStoreGroupsResponseItem);
+
+/**
+ * @summary Create store group
+ */
+export const CreateStoreGroupBody = zod.object({
+  name: zod.string(),
+});
+
+/**
+ * @summary Update store group
+ */
+export const UpdateStoreGroupParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdateStoreGroupBody = zod.object({
+  name: zod.string().optional(),
+});
+
+export const UpdateStoreGroupResponse = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  createdAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Delete store group
+ */
+export const DeleteStoreGroupParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const DeleteStoreGroupResponse = zod.object({
+  message: zod.string(),
+});
+
+/**
  * @summary Get all stores
  */
 export const GetStoresResponseItem = zod.object({
@@ -261,6 +306,15 @@ export const GetStoresResponseItem = zod.object({
   latitude: zod.number(),
   longitude: zod.number(),
   address: zod.string().nullish(),
+  imageUrl: zod.string().nullish(),
+  groupId: zod.number().nullish(),
+  group: zod
+    .object({
+      id: zod.number(),
+      name: zod.string(),
+      createdAt: zod.coerce.date(),
+    })
+    .nullish(),
   debt: zod.number(),
   totalVisits: zod.number(),
   lastVisit: zod.coerce.date().nullish(),
@@ -278,6 +332,7 @@ export const CreateStoreBody = zod.object({
   latitude: zod.number(),
   longitude: zod.number(),
   address: zod.string().optional(),
+  groupId: zod.number().nullish(),
 });
 
 /**
@@ -295,6 +350,15 @@ export const GetStoreResponse = zod.object({
   latitude: zod.number(),
   longitude: zod.number(),
   address: zod.string().nullish(),
+  imageUrl: zod.string().nullish(),
+  groupId: zod.number().nullish(),
+  group: zod
+    .object({
+      id: zod.number(),
+      name: zod.string(),
+      createdAt: zod.coerce.date(),
+    })
+    .nullish(),
   debt: zod.number(),
   totalVisits: zod.number(),
   lastVisit: zod.coerce.date().nullish(),
@@ -315,6 +379,7 @@ export const UpdateStoreBody = zod.object({
   latitude: zod.number().optional(),
   longitude: zod.number().optional(),
   address: zod.string().optional(),
+  groupId: zod.number().nullish(),
 });
 
 export const UpdateStoreResponse = zod.object({
@@ -325,6 +390,15 @@ export const UpdateStoreResponse = zod.object({
   latitude: zod.number(),
   longitude: zod.number(),
   address: zod.string().nullish(),
+  imageUrl: zod.string().nullish(),
+  groupId: zod.number().nullish(),
+  group: zod
+    .object({
+      id: zod.number(),
+      name: zod.string(),
+      createdAt: zod.coerce.date(),
+    })
+    .nullish(),
   debt: zod.number(),
   totalVisits: zod.number(),
   lastVisit: zod.coerce.date().nullish(),
@@ -634,6 +708,18 @@ export const SettleDistributorAccountResponse = zod.object({
 });
 
 /**
+ * @summary Get daily sales/accounting report
+ */
+export const GetDailyReportResponseItem = zod.object({
+  date: zod.coerce.date(),
+  totalSales: zod.number(),
+  totalCollected: zod.number(),
+  taskCount: zod.number(),
+  storeCount: zod.number(),
+});
+export const GetDailyReportResponse = zod.array(GetDailyReportResponseItem);
+
+/**
  * @summary Get all map locations (stores + distributors)
  */
 export const GetMapLocationsResponse = zod.object({
@@ -735,6 +821,17 @@ export const RejectStoreSuggestionResponse = zod.object({
   longitude: zod.number(),
   status: zod.enum(["pending", "approved", "rejected"]),
   createdAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Delete store suggestion
+ */
+export const DeleteStoreSuggestionParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const DeleteStoreSuggestionResponse = zod.object({
+  message: zod.string(),
 });
 
 /**

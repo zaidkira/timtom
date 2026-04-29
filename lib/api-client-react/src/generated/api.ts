@@ -127,6 +127,20 @@ export interface UpdateProductRequest {
   lowStockThreshold?: number;
 }
 
+export interface StoreGroup {
+  id: number;
+  name: string;
+  createdAt: string;
+}
+
+export interface CreateStoreGroupRequest {
+  name: string;
+}
+
+export interface UpdateStoreGroupRequest {
+  name?: string;
+}
+
 export interface Store {
   id: number;
   name: string;
@@ -136,6 +150,8 @@ export interface Store {
   longitude: number;
   address?: string | null;
   imageUrl?: string | null;
+  groupId?: number | null;
+  group?: StoreGroup | null;
   debt: number;
   totalVisits: number;
   lastVisit?: string | null;
@@ -149,7 +165,7 @@ export interface CreateStoreRequest {
   latitude: number;
   longitude: number;
   address?: string;
-  imageUrl?: string;
+  groupId?: number | null;
 }
 
 export interface UpdateStoreRequest {
@@ -159,7 +175,7 @@ export interface UpdateStoreRequest {
   latitude?: number;
   longitude?: number;
   address?: string;
-  imageUrl?: string;
+  groupId?: number | null;
 }
 
 export interface TaskItem {
@@ -292,6 +308,14 @@ export interface DistributorDebt {
   debt: number;
   totalCollected: number;
   totalSettled: number;
+}
+
+export interface DailyReportItem {
+  date: string;
+  totalSales: number;
+  totalCollected: number;
+  taskCount: number;
+  storeCount: number;
 }
 
 export interface SettleAccountRequest {
@@ -1508,6 +1532,294 @@ export const useDeleteProduct = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getDeleteProductMutationOptions(options));
+    }
+    
+/**
+ * @summary Get all store groups
+ */
+export const getGetStoreGroupsUrl = () => {
+
+
+  
+
+  return `/api/store-groups`
+}
+
+export const getStoreGroups = async ( options?: RequestInit): Promise<StoreGroup[]> => {
+  
+  return customFetch<StoreGroup[]>(getGetStoreGroupsUrl(),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+  
+
+
+
+
+export const getGetStoreGroupsQueryKey = () => {
+    return [
+    `/api/store-groups`
+    ] as const;
+    }
+
+    
+export const getGetStoreGroupsQueryOptions = <TData = Awaited<ReturnType<typeof getStoreGroups>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getStoreGroups>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetStoreGroupsQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getStoreGroups>>> = ({ signal }) => getStoreGroups({ signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getStoreGroups>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetStoreGroupsQueryResult = NonNullable<Awaited<ReturnType<typeof getStoreGroups>>>
+export type GetStoreGroupsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get all store groups
+ */
+
+export function useGetStoreGroups<TData = Awaited<ReturnType<typeof getStoreGroups>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getStoreGroups>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+  
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetStoreGroupsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+/**
+ * @summary Create store group
+ */
+export const getCreateStoreGroupUrl = () => {
+
+
+  
+
+  return `/api/store-groups`
+}
+
+export const createStoreGroup = async (createStoreGroupRequest: CreateStoreGroupRequest, options?: RequestInit): Promise<StoreGroup> => {
+  
+  return customFetch<StoreGroup>(getCreateStoreGroupUrl(),
+  {      
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      createStoreGroupRequest,)
+  }
+);}
+  
+
+
+
+export const getCreateStoreGroupMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createStoreGroup>>, TError,{data: BodyType<CreateStoreGroupRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createStoreGroup>>, TError,{data: BodyType<CreateStoreGroupRequest>}, TContext> => {
+
+const mutationKey = ['createStoreGroup'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createStoreGroup>>, {data: BodyType<CreateStoreGroupRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createStoreGroup(data,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateStoreGroupMutationResult = NonNullable<Awaited<ReturnType<typeof createStoreGroup>>>
+    export type CreateStoreGroupMutationBody = BodyType<CreateStoreGroupRequest>
+    export type CreateStoreGroupMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Create store group
+ */
+export const useCreateStoreGroup = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createStoreGroup>>, TError,{data: BodyType<CreateStoreGroupRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createStoreGroup>>,
+        TError,
+        {data: BodyType<CreateStoreGroupRequest>},
+        TContext
+      > => {
+      return useMutation(getCreateStoreGroupMutationOptions(options));
+    }
+    
+/**
+ * @summary Update store group
+ */
+export const getUpdateStoreGroupUrl = (id: number,) => {
+
+
+  
+
+  return `/api/store-groups/${id}`
+}
+
+export const updateStoreGroup = async (id: number,
+    updateStoreGroupRequest: UpdateStoreGroupRequest, options?: RequestInit): Promise<StoreGroup> => {
+  
+  return customFetch<StoreGroup>(getUpdateStoreGroupUrl(id),
+  {      
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      updateStoreGroupRequest,)
+  }
+);}
+  
+
+
+
+export const getUpdateStoreGroupMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateStoreGroup>>, TError,{id: number;data: BodyType<UpdateStoreGroupRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateStoreGroup>>, TError,{id: number;data: BodyType<UpdateStoreGroupRequest>}, TContext> => {
+
+const mutationKey = ['updateStoreGroup'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateStoreGroup>>, {id: number;data: BodyType<UpdateStoreGroupRequest>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateStoreGroup(id,data,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateStoreGroupMutationResult = NonNullable<Awaited<ReturnType<typeof updateStoreGroup>>>
+    export type UpdateStoreGroupMutationBody = BodyType<UpdateStoreGroupRequest>
+    export type UpdateStoreGroupMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Update store group
+ */
+export const useUpdateStoreGroup = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateStoreGroup>>, TError,{id: number;data: BodyType<UpdateStoreGroupRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateStoreGroup>>,
+        TError,
+        {id: number;data: BodyType<UpdateStoreGroupRequest>},
+        TContext
+      > => {
+      return useMutation(getUpdateStoreGroupMutationOptions(options));
+    }
+    
+/**
+ * @summary Delete store group
+ */
+export const getDeleteStoreGroupUrl = (id: number,) => {
+
+
+  
+
+  return `/api/store-groups/${id}`
+}
+
+export const deleteStoreGroup = async (id: number, options?: RequestInit): Promise<MessageResponse> => {
+  
+  return customFetch<MessageResponse>(getDeleteStoreGroupUrl(id),
+  {      
+    ...options,
+    method: 'DELETE'
+    
+    
+  }
+);}
+  
+
+
+
+export const getDeleteStoreGroupMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteStoreGroup>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteStoreGroup>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['deleteStoreGroup'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteStoreGroup>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteStoreGroup(id,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteStoreGroupMutationResult = NonNullable<Awaited<ReturnType<typeof deleteStoreGroup>>>
+    
+    export type DeleteStoreGroupMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Delete store group
+ */
+export const useDeleteStoreGroup = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteStoreGroup>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteStoreGroup>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDeleteStoreGroupMutationOptions(options));
     }
     
 /**
@@ -2773,6 +3085,81 @@ export const useSettleDistributorAccount = <TError = ErrorType<unknown>,
     }
     
 /**
+ * @summary Get daily sales/accounting report
+ */
+export const getGetDailyReportUrl = () => {
+
+
+  
+
+  return `/api/accounting/daily-report`
+}
+
+export const getDailyReport = async ( options?: RequestInit): Promise<DailyReportItem[]> => {
+  
+  return customFetch<DailyReportItem[]>(getGetDailyReportUrl(),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+  
+
+
+
+
+export const getGetDailyReportQueryKey = () => {
+    return [
+    `/api/accounting/daily-report`
+    ] as const;
+    }
+
+    
+export const getGetDailyReportQueryOptions = <TData = Awaited<ReturnType<typeof getDailyReport>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getDailyReport>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetDailyReportQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getDailyReport>>> = ({ signal }) => getDailyReport({ signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getDailyReport>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetDailyReportQueryResult = NonNullable<Awaited<ReturnType<typeof getDailyReport>>>
+export type GetDailyReportQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get daily sales/accounting report
+ */
+
+export function useGetDailyReport<TData = Awaited<ReturnType<typeof getDailyReport>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getDailyReport>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+  
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetDailyReportQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+/**
  * @summary Get all map locations (stores + distributors)
  */
 export const getGetMapLocationsUrl = () => {
@@ -3134,19 +3521,29 @@ export const useRejectStoreSuggestion = <TError = ErrorType<unknown>,
     }
     
 /**
- * @summary Admin delete store suggestion
+ * @summary Delete store suggestion
  */
 export const getDeleteStoreSuggestionUrl = (id: number,) => {
+
+
+  
+
   return `/api/suggestions/${id}`
 }
 
-export const deleteStoreSuggestion = async (id: number, options?: RequestInit): Promise<{message: string}> => {
-  return customFetch<{message: string}>(getDeleteStoreSuggestionUrl(id),
+export const deleteStoreSuggestion = async (id: number, options?: RequestInit): Promise<MessageResponse> => {
+  
+  return customFetch<MessageResponse>(getDeleteStoreSuggestionUrl(id),
   {      
     ...options,
     method: 'DELETE'
+    
+    
   }
 );}
+  
+
+
 
 export const getDeleteStoreSuggestionMutationOptions = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteStoreSuggestion>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
@@ -3159,16 +3556,29 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
+      
+
+
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteStoreSuggestion>>, {id: number}> = (props) => {
           const {id} = props ?? {};
+
           return  deleteStoreSuggestion(id,requestOptions)
         }
+
+
+
+        
+
 
   return  { mutationFn, ...mutationOptions }}
 
     export type DeleteStoreSuggestionMutationResult = NonNullable<Awaited<ReturnType<typeof deleteStoreSuggestion>>>
+    
     export type DeleteStoreSuggestionMutationError = ErrorType<unknown>
 
+    /**
+ * @summary Delete store suggestion
+ */
 export const useDeleteStoreSuggestion = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteStoreSuggestion>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<

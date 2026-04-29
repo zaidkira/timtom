@@ -705,6 +705,21 @@ paths:
               schema:
                 $ref: "#/components/schemas/MessageResponse"
 
+  /accounting/daily-report:
+    get:
+      operationId: getDailyReport
+      tags: [accounting]
+      summary: Get daily sales/accounting report
+      responses:
+        "200":
+          description: Daily report data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DailyReportItem"
+
   /map/locations:
     get:
       operationId: getMapLocations
@@ -787,6 +802,25 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/StoreSuggestion"
+
+  /suggestions/{id}:
+    delete:
+      operationId: deleteStoreSuggestion
+      tags: [suggestions]
+      summary: Delete store suggestion
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Suggestion deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
 
   /dashboard/stats:
     get:
@@ -1081,6 +1115,9 @@ components:
         longitude:
           type: number
         address:
+          type: string
+          nullable: true
+        imageUrl:
           type: string
           nullable: true
         groupId:
@@ -1416,6 +1453,27 @@ components:
         - debt
         - totalCollected
         - totalSettled
+
+    DailyReportItem:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        totalSales:
+          type: number
+        totalCollected:
+          type: number
+        taskCount:
+          type: integer
+        storeCount:
+          type: integer
+      required:
+        - date
+        - totalSales
+        - totalCollected
+        - taskCount
+        - storeCount
 
     SettleAccountRequest:
       type: object
