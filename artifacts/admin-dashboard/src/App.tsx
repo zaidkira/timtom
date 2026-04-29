@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from "@/hooks/use-auth";
 
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { DistributorLayout } from "@/components/layout/DistributorLayout";
+import { GlobalLocationRequest } from "@/components/GlobalLocationRequest";
 
 import Login from "@/pages/login";
 import Dashboard from "@/pages/admin/dashboard";
@@ -130,6 +131,7 @@ function App() {
       <TooltipProvider>
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
           <AuthProvider>
+            <GlobalLocationRequest />
             <Router />
           </AuthProvider>
         </WouterRouter>
