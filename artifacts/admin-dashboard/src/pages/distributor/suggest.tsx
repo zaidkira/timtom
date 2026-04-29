@@ -63,6 +63,18 @@ export default function SuggestStore() {
 
     setIsLocating(true);
     
+    // Safety timer
+    const safetyTimer = setTimeout(() => {
+      if (isLocating) {
+        setIsLocating(false);
+        toast({ 
+          title: "تأخر الاستجابة", 
+          description: "تحديد الموقع يستغرق وقتاً طويلاً. تأكد من تفعيل GPS أو استخدم الخريطة يدوياً.",
+          variant: "destructive"
+        });
+      }
+    }, 15000);
+
     // Median.co specific: Proactively request native permission dialog
     if (typeof (window as any).median !== 'undefined' && (window as any).median.permissions) {
       (window as any).median.permissions.request({permissions: ['location']});
@@ -72,12 +84,13 @@ export default function SuggestStore() {
 
     const options = {
       enableHighAccuracy: true,
-      timeout: 20000,
+      timeout: 10000,
       maximumAge: 0
     };
 
     navigator.geolocation.getCurrentPosition(
       (pos) => {
+        clearTimeout(safetyTimer);
         setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         setIsLocating(false);
         toast({ title: "تم تحديد الموقع بنجاح" });
@@ -87,11 +100,13 @@ export default function SuggestStore() {
         // Fallback to lower accuracy
         navigator.geolocation.getCurrentPosition(
           (pos) => {
+            clearTimeout(safetyTimer);
             setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
             setIsLocating(false);
             toast({ title: "تم تحديد الموقع (دقة عادية)" });
           },
           (err2) => {
+            clearTimeout(safetyTimer);
             console.error("Geolocation fallback error:", err2);
             setIsLocating(false);
             let msg = "فشل تحديد الموقع الجغرافي";
@@ -100,14 +115,11 @@ export default function SuggestStore() {
             if (err2.code === 1) {
               msg = "تم رفض صلاحية الموقع";
               desc = "يرجى السماح للمتصفح بالوصول للموقع من إعدادات الهاتف.";
-            } else if (err2.code === 3) {
-              msg = "انتهى وقت الطلب";
-              desc = "تأكد من وجودك في مكان مفتوح للحصول على إشارة GPS.";
             }
             
             toast({ title: msg, description: desc, variant: "destructive" });
           },
-          { enableHighAccuracy: false, timeout: 20000, maximumAge: 60000 }
+          { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
         );
       },
       options

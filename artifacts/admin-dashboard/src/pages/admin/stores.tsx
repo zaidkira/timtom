@@ -321,6 +321,18 @@ function StoreModal({ store, isOpen, onClose, groups }: { store?: Store, isOpen:
                 const btn = document.getElementById('get-admin-loc');
                 if (btn) btn.innerText = "جارٍ التحديد...";
                 
+                // Safety timer to reset button if browser hangs
+                const safetyTimer = setTimeout(() => {
+                  if (btn && btn.innerText === "جارٍ التحديد...") {
+                    btn.innerText = "استخدام موقعي الحالي";
+                    toast({ 
+                      title: "تأخر الاستجابة", 
+                      description: "يبدو أن تحديد الموقع يستغرق وقتاً طويلاً. تأكد من وجودك في مكان مكشوف أو استخدم البحث اليدوي.",
+                      variant: "destructive"
+                    });
+                  }
+                }, 15000);
+
                 // Median.co specific: Proactively request native permission dialog
                 if (typeof (window as any).median !== 'undefined' && (window as any).median.permissions) {
                   (window as any).median.permissions.request({permissions: ['location']});
@@ -330,26 +342,29 @@ function StoreModal({ store, isOpen, onClose, groups }: { store?: Store, isOpen:
 
                 const options = {
                   enableHighAccuracy: true,
-                  timeout: 20000,
+                  timeout: 10000, // Shorter timeout for first attempt
                   maximumAge: 0
                 };
 
                 navigator.geolocation.getCurrentPosition(
                   (pos) => {
+                    clearTimeout(safetyTimer);
                     setPosition([pos.coords.latitude, pos.coords.longitude]);
                     toast({ title: "تم تحديد موقعك بنجاح" });
                     if (btn) btn.innerText = "استخدام موقعي الحالي";
                   },
                   (err) => {
                     console.warn("Geolocation primary error (will fallback):", err);
-                    // Fallback to lower accuracy
+                    // Fallback to lower accuracy immediately
                     navigator.geolocation.getCurrentPosition(
                       (pos) => {
+                        clearTimeout(safetyTimer);
                         setPosition([pos.coords.latitude, pos.coords.longitude]);
                         toast({ title: "تم تحديد الموقع (دقة عادية)" });
                         if (btn) btn.innerText = "استخدام موقعي الحالي";
                       },
                       (err2) => {
+                        clearTimeout(safetyTimer);
                         console.error("Geolocation fallback error:", err2);
                         let errMsg = "فشل تحديد الموقع";
                         let desc = "تأكد من تفعيل GPS في الهاتف والموافقة على الصلاحيات.";
@@ -378,15 +393,12 @@ function StoreModal({ store, isOpen, onClose, groups }: { store?: Store, isOpen:
                             if (btn) btn.innerText = "استخدام موقعي الحالي";
                             return;
                           }
-                        } else if (err2.code === 3) {
-                          errMsg = "انتهى وقت الطلب";
-                          desc = "تأكد من وجود إشارة GPS جيدة (مكان مفتوح).";
                         }
                         
                         toast({ title: errMsg, description: desc, variant: "destructive" });
                         if (btn) btn.innerText = "استخدام موقعي الحالي";
                       },
-                      { enableHighAccuracy: false, timeout: 20000, maximumAge: 60000 }
+                      { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
                     );
                   },
                   options
