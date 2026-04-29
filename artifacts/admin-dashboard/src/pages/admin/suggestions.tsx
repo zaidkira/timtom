@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getStoreSuggestions, approveStoreSuggestion, rejectStoreSuggestion, deleteStoreSuggestion, getGetStoreSuggestionsQueryKey } from "@workspace/api-client-react";
+import { getStoreSuggestions, approveStoreSuggestion, rejectStoreSuggestion, deleteStoreSuggestion, getGetStoreSuggestionsQueryKey, StoreSuggestion } from "@workspace/api-client-react";
 import { CheckCircle, XCircle, MapPin, Camera, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -13,7 +13,7 @@ export default function Suggestions() {
   const { toast } = useToast();
   const qc = useQueryClient();
 
-  const { data: suggestions = [], isLoading } = useQuery({
+  const { data: suggestions = [], isLoading } = useQuery<StoreSuggestion[]>({
     queryKey: getGetStoreSuggestionsQueryKey(),
     queryFn: getStoreSuggestions,
   });

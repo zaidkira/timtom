@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getMapLocations, getGetMapLocationsQueryKey } from "@workspace/api-client-react";
+import { getMapLocations, getGetMapLocationsQueryKey, MapLocations } from "@workspace/api-client-react";
 import { Badge } from "@/components/ui/badge";
 
 export default function MapPage() {
@@ -9,9 +9,9 @@ export default function MapPage() {
   const leafletRef = useRef<any>(null);
   const markersLayerRef = useRef<any>(null);
 
-  const { data } = useQuery({
+  const { data } = useQuery<MapLocations>({
     queryKey: getGetMapLocationsQueryKey(),
-    queryFn: getMapLocations,
+    queryFn: () => getMapLocations(),
     refetchInterval: 5000,
   });
 

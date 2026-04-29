@@ -1,14 +1,14 @@
 import { createContext, useContext, ReactNode } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { login, logout, getMe, getGetMeQueryKey, User, LoginRequest } from "@workspace/api-client-react";
+import { login, logout, getMe, getGetMeQueryKey, User, LoginRequest, LoginResponse } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface AuthContextType {
   user: User | null | undefined;
   isLoading: boolean;
-  loginMutation: ReturnType<typeof useAuthLogin>;
-  logoutMutation: ReturnType<typeof useAuthLogout>;
+  loginMutation: ReturnType<typeof useMutation<LoginResponse, any, LoginRequest>>;
+  logoutMutation: ReturnType<typeof useMutation<any, any, void>>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -18,16 +18,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
-  const { data: user, isLoading } = useQuery({
+  const { data: user, isLoading } = useQuery<User | null>({
     queryKey: getGetMeQueryKey(),
     queryFn: () => getMe(),
     retry: false,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  const loginMutation = useMutation({
+  const loginMutation = useMutation<LoginResponse, any, LoginRequest>({
     mutationFn: (data: LoginRequest) => login(data),
-    onSuccess: (data) => {
+    onSuccess: (data: LoginResponse) => {
       queryClient.setQueryData(getGetMeQueryKey(), data.user);
       if (data.user.role === 'admin') {
         setLocation("/");
@@ -49,7 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   });
 
-  const logoutMutation = useMutation({
+  const logoutMutation = useMutation<any, any, void>({
     mutationFn: () => logout(),
     onSuccess: () => {
       queryClient.setQueryData(getGetMeQueryKey(), null);
@@ -71,5 +71,5 @@ export function useAuth() {
 }
 
 // Hooks aliases for ease
-function useAuthLogin() { return useMutation({ mutationFn: (data: LoginRequest) => login(data) }); }
-function useAuthLogout() { return useMutation({ mutationFn: () => logout() }); }
+function useAuthLogin() { return useMutation<LoginResponse, any, LoginRequest>({ mutationFn: (data: LoginRequest) => login(data) }); }
+function useAuthLogout() { return useMutation<any, any, void>({ mutationFn: () => logout() }); }

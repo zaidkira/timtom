@@ -3,7 +3,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getAccountingSummary, getStoreDebts, getDistributorDebts, settleDistributorAccount,
   getGetAccountingSummaryQueryKey, getGetStoreDebtsQueryKey, getGetDistributorDebtsQueryKey,
-  customFetch
+  customFetch,
+  AccountingSummary, StoreDebt, DistributorDebt
 } from "@workspace/api-client-react";
 import { TrendingUp, TrendingDown, Building2, Users, DollarSign, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -19,17 +20,17 @@ export default function Accounting() {
   const [activeTab, setActiveTab] = useState<"stores" | "distributors" | "daily">("stores");
   const [expandedDays, setExpandedDays] = useState<string[]>([]);
 
-  const { data: summary } = useQuery({
+  const { data: summary } = useQuery<AccountingSummary>({
     queryKey: [...getGetAccountingSummaryQueryKey(), period],
     queryFn: () => getAccountingSummary({ period }),
   });
 
-  const { data: storeDebts = [] } = useQuery({
+  const { data: storeDebts = [] } = useQuery<StoreDebt[]>({
     queryKey: getGetStoreDebtsQueryKey(),
     queryFn: getStoreDebts,
   });
 
-  const { data: distributorDebts = [] } = useQuery({
+  const { data: distributorDebts = [] } = useQuery<DistributorDebt[]>({
     queryKey: getGetDistributorDebtsQueryKey(),
     queryFn: getDistributorDebts,
   });

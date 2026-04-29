@@ -8,13 +8,13 @@ export default function DistributorHome() {
   const { data: tasks = [] } = useGetTasks();
   const { data: deliveries = [] } = useGetDeliveries();
 
-  const myCompletedTasks = tasks.filter((task) => task.status === "completed").length;
+  const myCompletedTasks = tasks.filter((task: any) => task.status === "completed").length;
   const myCollectedAmount = deliveries
-    .filter((delivery) => delivery.status === "confirmed" || delivery.status === "pending_admin")
-    .reduce((sum, delivery) => sum + delivery.amountCollected, 0);
+    .filter((delivery: any) => delivery.status === "confirmed" || delivery.status === "pending_admin")
+    .reduce((sum: number, delivery: any) => sum + delivery.amountCollected, 0);
   const myOutstandingDebt = deliveries
-    .filter((delivery) => delivery.status === "pending_admin")
-    .reduce((sum, delivery) => sum + delivery.amountCollected, 0);
+    .filter((delivery: any) => delivery.status === "pending_admin")
+    .reduce((sum: number, delivery: any) => sum + delivery.amountCollected, 0);
 
   const menuItems = [
     { title: "مهامي اليوم", icon: ListTodo, href: "/distributor/tasks", color: "bg-blue-500", shadow: "shadow-blue-500/20" },

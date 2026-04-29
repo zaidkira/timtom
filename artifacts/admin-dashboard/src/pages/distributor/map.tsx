@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getGetMapLocationsQueryKey, getMapLocations, getGetTasksQueryKey, getTasks } from "@workspace/api-client-react";
+import { getGetMapLocationsQueryKey, getMapLocations, getGetTasksQueryKey, getTasks, MapLocations, Task } from "@workspace/api-client-react";
 import { useAuth } from "@/hooks/use-auth";
 
 const ALGIERS_CENTER: [number, number] = [36.7525, 3.042];
@@ -13,20 +13,20 @@ export default function DistributorMap() {
   const markersLayerRef = useRef<any>(null);
   const [userPosition, setUserPosition] = useState<[number, number] | null>(null);
 
-  const { data: locations, isLoading: isLocationsLoading } = useQuery({
+  const { data: locations, isLoading: isLocationsLoading } = useQuery<MapLocations>({
     queryKey: getGetMapLocationsQueryKey(),
-    queryFn: getMapLocations,
+    queryFn: () => getMapLocations(),
     refetchInterval: 5000,
   });
 
-  const { data: tasks } = useQuery({
+  const { data: tasks } = useQuery<Task[]>({
     queryKey: getGetTasksQueryKey({ distributorId: user?.id }),
     queryFn: () => getTasks({ distributorId: user?.id }),
     refetchInterval: 10000,
     enabled: !!user?.id,
   });
 
-  const activeTask = useMemo(() => tasks?.find(t => t.status === "pending" || t.status === "in_progress"), [tasks]);
+  const activeTask = useMemo(() => tasks?.find((t: any) => t.status === "pending" || t.status === "in_progress"), [tasks]);
 
   useEffect(() => {
     if (!("geolocation" in navigator)) return;
