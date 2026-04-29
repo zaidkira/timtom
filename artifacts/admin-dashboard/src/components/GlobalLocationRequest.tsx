@@ -18,8 +18,15 @@ export function GlobalLocationRequest() {
     const timer = setTimeout(() => {
       // Median.co specific: Prompt for Android permission via Bridge
       // This ensures the native permission dialog shows up on Android
-      if (typeof (window as any).median !== 'undefined' && (window as any).median.android) {
-        (window as any).median.android.geoLocation.promptLocationServices();
+      if (typeof (window as any).median !== 'undefined') {
+        if ((window as any).median.android) {
+          (window as any).median.android.geoLocation.promptLocationServices();
+        }
+        
+        // Request specific permission which may trigger native prompt again
+        if ((window as any).median.permissions) {
+          (window as any).median.permissions.request({permissions: ['location']});
+        }
       }
 
       navigator.geolocation.getCurrentPosition(

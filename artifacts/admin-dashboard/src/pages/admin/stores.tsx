@@ -309,7 +309,7 @@ function StoreModal({ store, isOpen, onClose, groups }: { store?: Store, isOpen:
         
         <div className="space-y-2">
           <div className="flex justify-between items-center">
-            <label className="text-sm font-bold">حدد الموقع على الخريطة</label>
+            <label className="text-sm font-bold">موقع المحل على الخريطة</label>
             <div
               onClick={(e) => {
                 e.preventDefault();
@@ -355,6 +355,27 @@ function StoreModal({ store, isOpen, onClose, groups }: { store?: Store, isOpen:
                         if (err2.code === 1) {
                           errMsg = "تم رفض الصلاحية";
                           desc = "يجب السماح للمتصفح بالوصول للموقع من إعدادات الهاتف.";
+                          
+                          if (typeof (window as any).median !== 'undefined') {
+                            toast({ 
+                              title: errMsg, 
+                              description: (
+                                <div className="space-y-2">
+                                  <p>{desc}</p>
+                                  <button 
+                                    type="button"
+                                    onClick={() => (window as any).median.open.appSettings()}
+                                    className="bg-white text-rose-600 px-3 py-1 rounded-lg text-xs font-bold shadow-sm"
+                                  >
+                                    افتح إعدادات الهاتف
+                                  </button>
+                                </div>
+                              ), 
+                              variant: "destructive" 
+                            });
+                            if (btn) btn.innerText = "استخدام موقعي الحالي";
+                            return;
+                          }
                         } else if (err2.code === 3) {
                           errMsg = "انتهى وقت الطلب";
                           desc = "تأكد من وجود إشارة GPS جيدة (مكان مفتوح).";
@@ -377,6 +398,55 @@ function StoreModal({ store, isOpen, onClose, groups }: { store?: Store, isOpen:
               استخدام موقعي الحالي
             </div>
           </div>
+
+          {/* Address Search */}
+          <div className="flex gap-2">
+            <input 
+              id="address-search-input"
+              type="text" 
+              placeholder="ابحث عن عنوان أو منطقة..." 
+              className="flex-1 p-2 text-xs rounded-lg border border-slate-200 outline-none focus:border-primary"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  const val = (e.target as HTMLInputElement).value;
+                  if (val) {
+                    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(val)}`)
+                      .then(r => r.json())
+                      .then(data => {
+                        if (data && data[0]) {
+                          setPosition([Number(data[0].lat), Number(data[0].lon)]);
+                        } else {
+                          toast({ title: "لم يتم العثور على العنوان", variant: "destructive" });
+                        }
+                      });
+                  }
+                }
+              }}
+            />
+            <button 
+              type="button"
+              onClick={() => {
+                const input = document.getElementById('address-search-input') as HTMLInputElement;
+                const val = input.value;
+                if (val) {
+                  fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(val)}`)
+                    .then(r => r.json())
+                    .then(data => {
+                      if (data && data[0]) {
+                        setPosition([Number(data[0].lat), Number(data[0].lon)]);
+                      } else {
+                        toast({ title: "لم يتم العثور على العنوان", variant: "destructive" });
+                      }
+                    });
+                }
+              }}
+              className="bg-slate-100 p-2 rounded-lg text-xs font-bold hover:bg-slate-200"
+            >
+              بحث
+            </button>
+          </div>
+
           <div className="h-64 rounded-xl overflow-hidden border border-slate-200 relative">
             <MapContainer center={position} zoom={13} scrollWheelZoom={true} className="h-full w-full">
               <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
