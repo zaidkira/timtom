@@ -321,8 +321,10 @@ function StoreModal({ store, isOpen, onClose, groups }: { store?: Store, isOpen:
                 const btn = document.getElementById('get-admin-loc');
                 if (btn) btn.innerText = "جارٍ التحديد...";
                 
-                // Median.co specific: Prompt for Android permission via Bridge
-                if (typeof (window as any).median !== 'undefined' && (window as any).median.android) {
+                // Median.co specific: Proactively request native permission dialog
+                if (typeof (window as any).median !== 'undefined' && (window as any).median.permissions) {
+                  (window as any).median.permissions.request({permissions: ['location']});
+                } else if (typeof (window as any).median !== 'undefined' && (window as any).median.android) {
                   (window as any).median.android.geoLocation.promptLocationServices();
                 }
 

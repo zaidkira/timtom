@@ -63,8 +63,10 @@ export default function SuggestStore() {
 
     setIsLocating(true);
     
-    // Median.co specific: Prompt for Android permission via Bridge
-    if (typeof (window as any).median !== 'undefined' && (window as any).median.android) {
+    // Median.co specific: Proactively request native permission dialog
+    if (typeof (window as any).median !== 'undefined' && (window as any).median.permissions) {
+      (window as any).median.permissions.request({permissions: ['location']});
+    } else if (typeof (window as any).median !== 'undefined' && (window as any).median.android) {
       (window as any).median.android.geoLocation.promptLocationServices();
     }
 
