@@ -64,7 +64,7 @@ export default function SuggestStore() {
     setIsLocating(true);
     const options = {
       enableHighAccuracy: true,
-      timeout: 10000,
+      timeout: 20000,
       maximumAge: 0
     };
 
@@ -75,8 +75,8 @@ export default function SuggestStore() {
         toast({ title: "تم تحديد الموقع بنجاح" });
       },
       (err) => {
-        console.error("Geolocation primary error:", err);
-        // Fallback to lower accuracy if high accuracy fails or timeouts
+        console.warn("Geolocation primary error (will fallback):", err);
+        // Fallback to lower accuracy
         navigator.geolocation.getCurrentPosition(
           (pos) => {
             setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
@@ -87,11 +87,19 @@ export default function SuggestStore() {
             console.error("Geolocation fallback error:", err2);
             setIsLocating(false);
             let msg = "فشل تحديد الموقع الجغرافي";
-            if (err2.code === 1) msg = "يرجى السماح بالوصول للموقع";
-            else if (err2.code === 3) msg = "انتهى وقت الطلب. يرجى المحاولة مرة أخرى";
-            toast({ title: msg, variant: "destructive" });
+            let desc = "يرجى التأكد من تفعيل GPS والموافقة على الصلاحيات.";
+            
+            if (err2.code === 1) {
+              msg = "تم رفض صلاحية الموقع";
+              desc = "يرجى السماح للمتصفح بالوصول للموقع من إعدادات الهاتف.";
+            } else if (err2.code === 3) {
+              msg = "انتهى وقت الطلب";
+              desc = "تأكد من وجودك في مكان مفتوح للحصول على إشارة GPS.";
+            }
+            
+            toast({ title: msg, description: desc, variant: "destructive" });
           },
-          { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
+          { enableHighAccuracy: false, timeout: 20000, maximumAge: 60000 }
         );
       },
       options

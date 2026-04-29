@@ -323,7 +323,7 @@ function StoreModal({ store, isOpen, onClose, groups }: { store?: Store, isOpen:
                 
                 const options = {
                   enableHighAccuracy: true,
-                  timeout: 10000,
+                  timeout: 20000,
                   maximumAge: 0
                 };
 
@@ -334,7 +334,7 @@ function StoreModal({ store, isOpen, onClose, groups }: { store?: Store, isOpen:
                     if (btn) btn.innerText = "استخدام موقعي الحالي";
                   },
                   (err) => {
-                    console.error("Geolocation primary error:", err);
+                    console.warn("Geolocation primary error (will fallback):", err);
                     // Fallback to lower accuracy
                     navigator.geolocation.getCurrentPosition(
                       (pos) => {
@@ -345,12 +345,20 @@ function StoreModal({ store, isOpen, onClose, groups }: { store?: Store, isOpen:
                       (err2) => {
                         console.error("Geolocation fallback error:", err2);
                         let errMsg = "فشل تحديد الموقع";
-                        if (err2.code === 1) errMsg = "الرجاء السماح للمتصفح بالوصول لموقعك";
-                        else if (err2.code === 3) errMsg = "انتهى وقت الطلب. يرجى المحاولة مرة أخرى";
-                        toast({ title: errMsg, variant: "destructive" });
+                        let desc = "تأكد من تفعيل GPS في الهاتف والموافقة على الصلاحيات.";
+                        
+                        if (err2.code === 1) {
+                          errMsg = "تم رفض الصلاحية";
+                          desc = "يجب السماح للمتصفح بالوصول للموقع من إعدادات الهاتف.";
+                        } else if (err2.code === 3) {
+                          errMsg = "انتهى وقت الطلب";
+                          desc = "تأكد من وجود إشارة GPS جيدة (مكان مفتوح).";
+                        }
+                        
+                        toast({ title: errMsg, description: desc, variant: "destructive" });
                         if (btn) btn.innerText = "استخدام موقعي الحالي";
                       },
-                      { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
+                      { enableHighAccuracy: false, timeout: 20000, maximumAge: 60000 }
                     );
                   },
                   options

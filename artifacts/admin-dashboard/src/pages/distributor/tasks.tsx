@@ -22,7 +22,7 @@ export default function DistributorTasks() {
       return;
     }
 
-    const options = { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 };
+    const options = { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 };
 
     const onSuccess = (pos: GeolocationPosition) => {
       setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });

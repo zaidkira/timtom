@@ -26,15 +26,22 @@ function LocationTracker({ distributorId }: { distributorId: number }) {
       }).catch((err) => console.error("Failed to update location", err));
     };
 
-    // Initial update
-    navigator.geolocation.getCurrentPosition(sendLocation, (err) => {
-      // User can deny location access; this should not be treated as app failure.
-      if (err.code === err.PERMISSION_DENIED) {
-        permissionDenied = true;
-        return;
-      }
-      console.error("Initial location error", err);
-    });
+    // Initial update with fallback
+    const tryGetLocation = (highAccuracy: boolean) => {
+      navigator.geolocation.getCurrentPosition(
+        sendLocation,
+        (err) => {
+          console.error(`Initial location error (highAccuracy=${highAccuracy}):`, err);
+          if (highAccuracy) {
+            // Try again with low accuracy
+            tryGetLocation(false);
+          }
+        },
+        { enableHighAccuracy: highAccuracy, timeout: 15000, maximumAge: 60000 }
+      );
+    };
+
+    tryGetLocation(true);
 
     const watchId = navigator.geolocation.watchPosition(
       sendLocation,
@@ -43,12 +50,11 @@ function LocationTracker({ distributorId }: { distributorId: number }) {
           permissionDenied = true;
           return;
         }
-        // Avoid noisy repeat logs if permission was already denied.
         if (!permissionDenied) {
-          console.error("Location error", err);
+          console.error("Location watch error", err);
         }
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+      { enableHighAccuracy: false, timeout: 20000, maximumAge: 60000 }
     );
 
     return () => navigator.geolocation.clearWatch(watchId);
