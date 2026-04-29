@@ -16,6 +16,12 @@ export function GlobalLocationRequest() {
 
     // Small delay to ensure UI is ready and avoid blocking initial render
     const timer = setTimeout(() => {
+      // Median.co specific: Prompt for Android permission via Bridge
+      // This ensures the native permission dialog shows up on Android
+      if (typeof (window as any).median !== 'undefined' && (window as any).median.android) {
+        (window as any).median.android.geoLocation.promptLocationServices();
+      }
+
       navigator.geolocation.getCurrentPosition(
         () => {
           console.log("Location permission granted/confirmed early");
@@ -26,6 +32,11 @@ export function GlobalLocationRequest() {
         { enableHighAccuracy: false, timeout: 5000, maximumAge: Infinity }
       );
     }, 2000);
+
+    // Median.co specific: iOS Bridge ready callback
+    (window as any).median_geolocation_ready = () => {
+      console.log("Median.co Native iOS Geolocation is ready");
+    };
 
     return () => clearTimeout(timer);
   }, [user]);

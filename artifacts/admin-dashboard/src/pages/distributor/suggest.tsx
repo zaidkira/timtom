@@ -62,6 +62,12 @@ export default function SuggestStore() {
     }
 
     setIsLocating(true);
+    
+    // Median.co specific: Prompt for Android permission via Bridge
+    if (typeof (window as any).median !== 'undefined' && (window as any).median.android) {
+      (window as any).median.android.geoLocation.promptLocationServices();
+    }
+
     const options = {
       enableHighAccuracy: true,
       timeout: 20000,
