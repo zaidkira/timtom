@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useGetDistributors, useGetStores } from "@workspace/api-client-react";
+import { useGetDistributors, useGetStores, useGetStoreGroups } from "@workspace/api-client-react";
 import { Modal } from "@/components/ui/modal";
-import { Plus, ListTodo, Trash2, Calendar, Users, Store, Play, ChevronDown, ChevronUp, Image } from "lucide-react";
+import { Plus, ListTodo, Trash2, Calendar, Users, Store, Play, ChevronDown, ChevronUp, Image, Layers } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface TaskGroupStore {
@@ -196,6 +196,7 @@ function CreateGroupModal({ onClose }: { onClose: () => void }) {
   const { toast } = useToast();
   const { data: distributors } = useGetDistributors();
   const { data: stores } = useGetStores();
+  const { data: storeGroups } = useGetStoreGroups();
 
   const [name, setName] = useState("");
   const [distributorId, setDistributorId] = useState("");
@@ -225,6 +226,25 @@ function CreateGroupModal({ onClose }: { onClose: () => void }) {
 
   const toggleStore = (id: number) => {
     setSelectedStores((prev) => (prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]));
+  };
+
+  const toggleGroup = (groupId: number) => {
+    const groupStores = stores?.filter(s => s.groupId === groupId).map(s => s.id) || [];
+    if (groupStores.length === 0) {
+      toast({ title: "هذه المجموعة لا تحتوي على محلات" });
+      return;
+    }
+    
+    // Check if all stores in the group are already selected
+    const allSelected = groupStores.every(id => selectedStores.includes(id));
+    
+    if (allSelected) {
+      // Remove all stores of this group
+      setSelectedStores(prev => prev.filter(id => !groupStores.includes(id)));
+    } else {
+      // Add all stores of this group that aren't already selected
+      setSelectedStores(prev => [...new Set([...prev, ...groupStores])]);
+    }
   };
 
   const toggleDay = (day: number) => {
@@ -298,6 +318,39 @@ function CreateGroupModal({ onClose }: { onClose: () => void }) {
             ))}
           </div>
         </div>
+
+        {/* Store Groups */}
+        {storeGroups && storeGroups.length > 0 && (
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
+              <Layers className="w-4 h-4 text-primary" />
+              اختيار حسب المجموعة
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {storeGroups.map((group) => {
+                const groupStores = stores?.filter(s => s.groupId === group.id).map(s => s.id) || [];
+                const allSelected = groupStores.length > 0 && groupStores.every(id => selectedStores.includes(id));
+                
+                return (
+                  <button
+                    key={group.id}
+                    type="button"
+                    onClick={() => toggleGroup(group.id)}
+                    className={`px-4 py-2 rounded-xl border text-sm font-bold transition-all flex items-center gap-2 ${
+                      allSelected 
+                        ? "bg-primary/10 border-primary text-primary" 
+                        : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
+                    }`}
+                  >
+                    <div className={`w-2 h-2 rounded-full ${allSelected ? "bg-primary" : "bg-slate-400"}`} />
+                    {group.name}
+                    <span className="text-xs opacity-60">({groupStores.length})</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Stores */}
         <div className="space-y-1">
