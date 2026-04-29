@@ -63,6 +63,7 @@ router.post("/", requireRole("distributor"), async (req, res) => {
 
 router.put("/:id/approve", requireRole("admin"), async (req, res) => {
   const id = Number.parseInt(String(req.params.id), 10);
+  const { groupId } = req.body;
   const suggestions = await db.select().from(storeSuggestionsTable).where(eq(storeSuggestionsTable.id, id));
   const suggestion = suggestions[0];
 
@@ -78,6 +79,8 @@ router.put("/:id/approve", requireRole("admin"), async (req, res) => {
     address: suggestion.address,
     latitude: suggestion.latitude,
     longitude: suggestion.longitude,
+    imageUrl: suggestion.photoUrl,
+    groupId: groupId ? Number(groupId) : null,
   });
 
   await db.update(storeSuggestionsTable).set({ status: "approved" }).where(eq(storeSuggestionsTable.id, id));

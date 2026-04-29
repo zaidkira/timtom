@@ -30,21 +30,22 @@ export default function Distributors() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
         <div>
           <h1 className="text-2xl font-display font-bold">إدارة الموزعين</h1>
-          <p className="text-slate-500">أضف وعَدّل بيانات الموزعين وتتبع أداءهم</p>
+          <p className="text-slate-500 text-sm sm:text-base">أضف وعَدّل بيانات الموزعين وتتبع أداءهم</p>
         </div>
         <button 
           onClick={() => setIsCreateOpen(true)}
-          className="bg-primary text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-primary/90 shadow-lg shadow-primary/25 hover:-translate-y-0.5 transition-all"
+          className="w-full sm:w-auto bg-primary text-white px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-primary/90 shadow-lg shadow-primary/25 hover:-translate-y-0.5 transition-all"
         >
           <Plus className="w-5 h-5" />
           إضافة موزع
         </button>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+      {/* Desktop Table View */}
+      <div className="hidden md:block bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-right">
             <thead className="bg-slate-50 border-b border-slate-100 text-slate-600 font-semibold">
@@ -87,13 +88,65 @@ export default function Distributors() {
                   </td>
                 </tr>
               ))}
-              {distributors?.length === 0 && (
-                <tr><td colSpan={8} className="p-8 text-center text-slate-500">لا يوجد موزعون حالياً</td></tr>
-              )}
             </tbody>
           </table>
         </div>
       </div>
+
+      {/* Mobile Card View */}
+      <div className="md:hidden space-y-4">
+        {distributors?.map((dist) => (
+          <div key={dist.id} className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 space-y-3">
+            <div className="flex justify-between items-start">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-500">
+                  {dist.firstName[0]}
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900">{dist.firstName} {dist.lastName}</h3>
+                  <p className="text-xs text-slate-500" dir="ltr">{dist.username}</p>
+                </div>
+              </div>
+              <Badge variant={dist.isActive ? "success" : "destructive"}>
+                {dist.isActive ? "نشط" : "غير نشط"}
+              </Badge>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div className="bg-slate-50 p-2 rounded-xl">
+                <p className="text-slate-500 text-xs mb-1">المهام</p>
+                <p className="font-bold">{dist.totalTasksCompleted}</p>
+              </div>
+              <div className="bg-rose-50 p-2 rounded-xl">
+                <p className="text-rose-500 text-xs mb-1">الديون</p>
+                <p className="font-bold text-rose-600">{formatCurrency(dist.debt)}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-2 border-t border-slate-50">
+              <p className="text-xs text-slate-400" dir="ltr">{dist.phone}</p>
+              <div className="flex gap-2">
+                <button onClick={() => setEditingDist(dist)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                  <Edit2 className="w-4 h-4" />
+                </button>
+                <button 
+                  onClick={() => handleDelete(dist.id)} 
+                  disabled={deleteMutation.isPending}
+                  className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {distributors?.length === 0 && (
+        <div className="p-8 text-center text-slate-500 bg-white rounded-2xl border border-slate-100">
+          لا يوجد موزعون حالياً
+        </div>
+      )}
 
       <CreateDistributorModal isOpen={isCreateOpen} onClose={() => setIsCreateOpen(false)} />
       {editingDist && <EditDistributorModal dist={editingDist} isOpen={true} onClose={() => setEditingDist(null)} />}

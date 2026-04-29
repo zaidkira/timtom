@@ -786,6 +786,10 @@ export const ApproveStoreSuggestionParams = zod.object({
   id: zod.coerce.number(),
 });
 
+export const ApproveStoreSuggestionBody = zod.object({
+  groupId: zod.number().nullish(),
+});
+
 export const ApproveStoreSuggestionResponse = zod.object({
   id: zod.number(),
   distributorId: zod.number(),

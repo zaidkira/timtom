@@ -436,6 +436,10 @@ export const GetAccountingSummaryPeriod = {
   month: 'month',
 } as const;
 
+export type ApproveStoreSuggestionBody = {
+  groupId?: number | null;
+};
+
 type AwaitedInput<T> = PromiseLike<T> | T;
 
       type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
@@ -3391,14 +3395,16 @@ export const getApproveStoreSuggestionUrl = (id: number,) => {
   return `/api/suggestions/${id}/approve`
 }
 
-export const approveStoreSuggestion = async (id: number, options?: RequestInit): Promise<StoreSuggestion> => {
+export const approveStoreSuggestion = async (id: number,
+    approveStoreSuggestionBody: ApproveStoreSuggestionBody, options?: RequestInit): Promise<StoreSuggestion> => {
   
   return customFetch<StoreSuggestion>(getApproveStoreSuggestionUrl(id),
   {      
     ...options,
-    method: 'PUT'
-    
-    
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      approveStoreSuggestionBody,)
   }
 );}
   
@@ -3406,8 +3412,8 @@ export const approveStoreSuggestion = async (id: number, options?: RequestInit):
 
 
 export const getApproveStoreSuggestionMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof approveStoreSuggestion>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof approveStoreSuggestion>>, TError,{id: number}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof approveStoreSuggestion>>, TError,{id: number;data: BodyType<ApproveStoreSuggestionBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof approveStoreSuggestion>>, TError,{id: number;data: BodyType<ApproveStoreSuggestionBody>}, TContext> => {
 
 const mutationKey = ['approveStoreSuggestion'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -3419,10 +3425,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof approveStoreSuggestion>>, {id: number}> = (props) => {
-          const {id} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof approveStoreSuggestion>>, {id: number;data: BodyType<ApproveStoreSuggestionBody>}> = (props) => {
+          const {id,data} = props ?? {};
 
-          return  approveStoreSuggestion(id,requestOptions)
+          return  approveStoreSuggestion(id,data,requestOptions)
         }
 
 
@@ -3433,18 +3439,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type ApproveStoreSuggestionMutationResult = NonNullable<Awaited<ReturnType<typeof approveStoreSuggestion>>>
-    
+    export type ApproveStoreSuggestionMutationBody = BodyType<ApproveStoreSuggestionBody>
     export type ApproveStoreSuggestionMutationError = ErrorType<unknown>
 
     /**
  * @summary Admin approve store suggestion
  */
 export const useApproveStoreSuggestion = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof approveStoreSuggestion>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof approveStoreSuggestion>>, TError,{id: number;data: BodyType<ApproveStoreSuggestionBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof approveStoreSuggestion>>,
         TError,
-        {id: number},
+        {id: number;data: BodyType<ApproveStoreSuggestionBody>},
         TContext
       > => {
       return useMutation(getApproveStoreSuggestionMutationOptions(options));

@@ -55,22 +55,22 @@ export default function Stores() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
         <div>
           <h1 className="text-2xl font-display font-bold">إدارة المحلات</h1>
-          <p className="text-slate-500">سجل المحلات التجارية ومواقعها وديونها</p>
+          <p className="text-slate-500 text-sm sm:text-base">سجل المحلات التجارية ومواقعها وديونها</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 w-full sm:w-auto">
           <button 
             onClick={() => setIsGroupsOpen(true)}
-            className="bg-slate-100 text-slate-700 px-4 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-slate-200 transition-all"
+            className="flex-1 sm:flex-none bg-slate-100 text-slate-700 px-4 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-slate-200 transition-all"
           >
             <Folder className="w-5 h-5" />
             المجموعات
           </button>
           <button 
             onClick={() => setIsCreateOpen(true)}
-            className="bg-primary text-white px-4 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-primary/90 shadow-lg shadow-primary/25 hover:-translate-y-0.5 transition-all"
+            className="flex-1 sm:flex-none bg-primary text-white px-4 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-primary/90 shadow-lg shadow-primary/25 hover:-translate-y-0.5 transition-all"
           >
             <Plus className="w-5 h-5" />
             إضافة محل
@@ -320,6 +320,13 @@ function StoreModal({ store, isOpen, onClose, groups }: { store?: Store, isOpen:
                 }
                 const btn = document.getElementById('get-admin-loc');
                 if (btn) btn.innerText = "جارٍ التحديد...";
+                
+                const options = {
+                  enableHighAccuracy: true,
+                  timeout: 10000,
+                  maximumAge: 0
+                };
+
                 navigator.geolocation.getCurrentPosition(
                   (pos) => {
                     setPosition([pos.coords.latitude, pos.coords.longitude]);
@@ -327,16 +334,26 @@ function StoreModal({ store, isOpen, onClose, groups }: { store?: Store, isOpen:
                     if (btn) btn.innerText = "استخدام موقعي الحالي";
                   },
                   (err) => {
-                    console.error("Geolocation error:", err);
-                    let errMsg = "فشل تحديد الموقع";
-                    if (err.code === 1) errMsg += ": الرجاء السماح للمتصفح بالوصول لموقعك";
-                    else if (err.code === 2) errMsg += ": الموقع غير متوفر حالياً";
-                    else if (err.code === 3) errMsg += ": انتهى وقت الطلب (Timeout)";
-                    else errMsg += `: ${err.message}`;
-                    toast({ title: errMsg, variant: "destructive" });
-                    if (btn) btn.innerText = "استخدام موقعي الحالي";
+                    console.error("Geolocation primary error:", err);
+                    // Fallback to lower accuracy
+                    navigator.geolocation.getCurrentPosition(
+                      (pos) => {
+                        setPosition([pos.coords.latitude, pos.coords.longitude]);
+                        toast({ title: "تم تحديد الموقع (دقة عادية)" });
+                        if (btn) btn.innerText = "استخدام موقعي الحالي";
+                      },
+                      (err2) => {
+                        console.error("Geolocation fallback error:", err2);
+                        let errMsg = "فشل تحديد الموقع";
+                        if (err2.code === 1) errMsg = "الرجاء السماح للمتصفح بالوصول لموقعك";
+                        else if (err2.code === 3) errMsg = "انتهى وقت الطلب. يرجى المحاولة مرة أخرى";
+                        toast({ title: errMsg, variant: "destructive" });
+                        if (btn) btn.innerText = "استخدام موقعي الحالي";
+                      },
+                      { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
+                    );
                   },
-                  { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+                  options
                 );
               }}
               id="get-admin-loc"

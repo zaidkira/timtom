@@ -22,17 +22,26 @@ export default function DistributorTasks() {
       return;
     }
 
-    const watchId = navigator.geolocation.watchPosition(
-      (pos) => {
-        setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        setLocationError(null);
-      },
-      (err) => {
-        console.error("Location error:", err);
-        setLocationError("يرجى تفعيل الموقع الجغرافي لترتيب المهام حسب المسافة");
-      },
-      { enableHighAccuracy: true }
-    );
+    const options = { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 };
+
+    const onSuccess = (pos: GeolocationPosition) => {
+      setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+      setLocationError(null);
+    };
+
+    const onError = (err: GeolocationPositionError) => {
+      console.error("Location watch error:", err);
+      if (err.code === 1) {
+        setLocationError("يرجى السماح بالوصول للموقع لترتيب المهام");
+      } else {
+        // Try fallback to low accuracy
+        navigator.geolocation.getCurrentPosition(onSuccess, (err2) => {
+          setLocationError("فشل تحديد الموقع. يرجى التأكد من تفعيل GPS");
+        }, { enableHighAccuracy: false, timeout: 10000 });
+      }
+    };
+
+    const watchId = navigator.geolocation.watchPosition(onSuccess, onError, options);
 
     return () => navigator.geolocation.clearWatch(watchId);
   }, []);

@@ -40,13 +40,13 @@ export default function Deliveries() {
   });
 
   return (
-    <div dir="rtl" className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
+    <div dir="rtl" className="p-4 sm:p-6 space-y-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
         <h1 className="text-2xl font-bold text-slate-800">مراجعة التوصيلات</h1>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
           {["pending_admin", "confirmed", "rejected"].map(s => (
             <button key={s} onClick={() => setFilter(s)}
-              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${filter === s ? "bg-blue-600 text-white shadow-md" : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"}`}>
+              className={`flex-1 sm:flex-none px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all ${filter === s ? "bg-blue-600 text-white shadow-md" : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"}`}>
               {statusLabels[s].label}
             </button>
           ))}

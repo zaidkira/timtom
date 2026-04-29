@@ -1,7 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getStoreSuggestions, approveStoreSuggestion, rejectStoreSuggestion, deleteStoreSuggestion, getGetStoreSuggestionsQueryKey, StoreSuggestion } from "@workspace/api-client-react";
-import { CheckCircle, XCircle, MapPin, Camera, Trash2 } from "lucide-react";
+import { getStoreSuggestions, approveStoreSuggestion, useApproveStoreSuggestion, rejectStoreSuggestion, deleteStoreSuggestion, getGetStoreSuggestionsQueryKey, useGetStoreGroups, StoreSuggestion } from "@workspace/api-client-react";
+import { CheckCircle, XCircle, MapPin, Camera, Trash2, Folder } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Modal } from "@/components/ui/modal";
+import { useState } from "react";
 
 const statusLabels: Record<string, { label: string; color: string }> = {
   pending: { label: "في الانتظار", color: "bg-amber-100 text-amber-800" },
@@ -12,16 +14,26 @@ const statusLabels: Record<string, { label: string; color: string }> = {
 export default function Suggestions() {
   const { toast } = useToast();
   const qc = useQueryClient();
+  const { data: groups } = useGetStoreGroups();
+  const [approvingId, setApprovingId] = useState<number | null>(null);
+  const [selectedGroupId, setSelectedGroupId] = useState<string>("");
 
   const { data: suggestions = [], isLoading } = useQuery<StoreSuggestion[]>({
     queryKey: getGetStoreSuggestionsQueryKey(),
     queryFn: getStoreSuggestions,
   });
 
-  const approve = useMutation({
-    mutationFn: (id: number) => approveStoreSuggestion(id),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: getGetStoreSuggestionsQueryKey() }); toast({ title: "تم قبول الاقتراح" }); },
-    onError: () => toast({ title: "خطأ", variant: "destructive" }),
+  const approve = useApproveStoreSuggestion({
+    mutation: {
+      onSuccess: () => { 
+        qc.invalidateQueries({ queryKey: getGetStoreSuggestionsQueryKey() }); 
+        qc.invalidateQueries({ queryKey: ["/api/stores"] });
+        toast({ title: "تم قبول الاقتراح" }); 
+        setApprovingId(null);
+        setSelectedGroupId("");
+      },
+      onError: () => toast({ title: "خطأ", variant: "destructive" }),
+    }
   });
 
   const reject = useMutation({
@@ -37,8 +49,11 @@ export default function Suggestions() {
   });
 
   return (
-    <div dir="rtl" className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold text-slate-800">اقتراحات المحلات</h1>
+    <div dir="rtl" className="p-4 sm:p-6 space-y-6">
+      <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+        <h1 className="text-2xl font-bold text-slate-800">اقتراحات المحلات</h1>
+        <p className="text-slate-500 text-sm mt-1">راجع واعتمد المحلات المقترحة من قبل الموزعين</p>
+      </div>
 
       {isLoading ? (
         <div className="flex justify-center py-20"><div className="animate-spin w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full" /></div>
@@ -82,7 +97,7 @@ export default function Suggestions() {
                 </div>
                 {s.status === "pending" && (
                   <div className="flex gap-2 pt-2">
-                    <button onClick={() => approve.mutate(s.id)}
+                    <button onClick={() => setApprovingId(s.id)}
                       className="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 rounded-xl text-sm font-medium flex items-center justify-center gap-1 transition-colors">
                       <CheckCircle size={16} /> قبول
                     </button>
@@ -97,6 +112,49 @@ export default function Suggestions() {
           ))}
         </div>
       )}
+
+      {/* Approval Modal */}
+      <Modal 
+        isOpen={!!approvingId} 
+        onClose={() => setApprovingId(null)} 
+        title="تأكيد قبول المحل"
+        className="max-w-md"
+      >
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-bold flex items-center gap-2">
+              <Folder className="w-4 h-4 text-primary" />
+              اختيار مجموعة للمحل (اختياري)
+            </label>
+            <select 
+              value={selectedGroupId} 
+              onChange={e => setSelectedGroupId(e.target.value)}
+              className="w-full p-3 rounded-xl border border-slate-200 bg-white outline-none focus:border-primary"
+            >
+              <option value="">بدون مجموعة</option>
+              {groups?.map(g => (
+                <option key={g.id} value={g.id}>{g.name}</option>
+              ))}
+            </select>
+          </div>
+          
+          <div className="flex gap-3 pt-4">
+            <button 
+              onClick={() => approve.mutate({ id: approvingId!, data: { groupId: selectedGroupId ? Number(selectedGroupId) : null } })}
+              disabled={approve.isPending}
+              className="flex-1 bg-primary text-white py-3 rounded-xl font-bold hover:bg-primary/90 transition-colors disabled:opacity-50"
+            >
+              {approve.isPending ? "جاري الحفظ..." : "تأكيد القبول"}
+            </button>
+            <button 
+              onClick={() => setApprovingId(null)}
+              className="flex-1 bg-slate-100 text-slate-600 py-3 rounded-xl font-bold hover:bg-slate-200 transition-colors"
+            >
+              إلغاء
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

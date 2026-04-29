@@ -80,14 +80,14 @@ export default function TaskGroups() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
         <div>
           <h1 className="text-2xl font-display font-bold">مجموعات المهام المتكررة</h1>
-          <p className="text-slate-500 mt-1">إنشاء مجموعات مهام تتولّد تلقائياً كل أسبوع</p>
+          <p className="text-slate-500 text-sm sm:text-base mt-1">إنشاء مجموعات مهام تتولّد تلقائياً كل أسبوع</p>
         </div>
         <button
           onClick={() => setIsCreateOpen(true)}
-          className="bg-primary text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-primary/90 shadow-lg shadow-primary/25 hover:-translate-y-0.5 transition-all"
+          className="w-full sm:w-auto bg-primary text-white px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-primary/90 shadow-lg shadow-primary/25 hover:-translate-y-0.5 transition-all"
         >
           <Plus className="w-5 h-5" />
           إنشاء مجموعة

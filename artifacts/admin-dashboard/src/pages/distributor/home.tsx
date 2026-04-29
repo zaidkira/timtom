@@ -1,7 +1,7 @@
 import { useGetDeliveries, useGetTasks } from "@workspace/api-client-react";
 import { Link } from "wouter";
 import { ListTodo, Map as MapIcon, PlusCircle } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 
 export default function DistributorHome() {
@@ -45,9 +45,12 @@ export default function DistributorHome() {
 
       <h3 className="font-bold text-xl text-slate-800 px-2 mt-8">الخدمات</h3>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-4 px-2">
         {menuItems.map((item, i) => (
-          <Link key={i} href={item.href}>
+          <Link key={i} href={item.href} className={cn(
+            "block",
+            i === menuItems.length - 1 && menuItems.length % 2 !== 0 ? "col-span-2" : ""
+          )}>
             <motion.div
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}

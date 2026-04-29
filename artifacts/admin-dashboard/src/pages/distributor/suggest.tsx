@@ -62,16 +62,39 @@ export default function SuggestStore() {
     }
 
     setIsLocating(true);
+    const options = {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0
+    };
+
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         setIsLocating(false);
         toast({ title: "تم تحديد الموقع بنجاح" });
       },
-      () => {
-        setIsLocating(false);
-        toast({ title: "فشل تحديد الموقع", variant: "destructive" });
-      }
+      (err) => {
+        console.error("Geolocation primary error:", err);
+        // Fallback to lower accuracy if high accuracy fails or timeouts
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+            setIsLocating(false);
+            toast({ title: "تم تحديد الموقع (دقة عادية)" });
+          },
+          (err2) => {
+            console.error("Geolocation fallback error:", err2);
+            setIsLocating(false);
+            let msg = "فشل تحديد الموقع الجغرافي";
+            if (err2.code === 1) msg = "يرجى السماح بالوصول للموقع";
+            else if (err2.code === 3) msg = "انتهى وقت الطلب. يرجى المحاولة مرة أخرى";
+            toast({ title: msg, variant: "destructive" });
+          },
+          { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
+        );
+      },
+      options
     );
   };
 

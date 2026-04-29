@@ -58,13 +58,16 @@ export default function Accounting() {
   const periodLabels = { day: "اليوم", week: "الأسبوع", month: "الشهر" };
 
   return (
-    <div dir="rtl" className="p-6 space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <h1 className="text-2xl font-bold text-slate-800">المحاسبة والأرباح</h1>
-        <div className="flex gap-2">
+    <div dir="rtl" className="p-4 sm:p-6 space-y-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-800">المحاسبة والأرباح</h1>
+          <p className="text-slate-500 text-sm mt-1">تتبع الأداء المالي والديون خلال فترات زمنية</p>
+        </div>
+        <div className="flex gap-2 w-full sm:w-auto">
           {(["day", "week", "month"] as const).map(p => (
             <button key={p} onClick={() => setPeriod(p)}
-              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${period === p ? "bg-blue-600 text-white shadow-md" : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"}`}>
+              className={`flex-1 sm:flex-none px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all ${period === p ? "bg-blue-600 text-white shadow-md" : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"}`}>
               {periodLabels[p]}
             </button>
           ))}

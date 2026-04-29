@@ -776,6 +776,15 @@ paths:
           required: true
           schema:
             type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                groupId:
+                  type: integer
+                  nullable: true
       responses:
         "200":
           description: Suggestion approved
