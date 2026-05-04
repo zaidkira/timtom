@@ -63,18 +63,9 @@ router.put("/:id", requireRole("admin"), async (req, res) => {
 
 router.delete("/:id", requireRole("admin"), async (req, res) => {
   const id = Number.parseInt(String(req.params.id), 10);
-  const [tasks, deliveries] = await Promise.all([
-    db.select({ id: tasksTable.id }).from(tasksTable).where(eq(tasksTable.storeId, id)).limit(1),
-    db.select({ id: deliveriesTable.id }).from(deliveriesTable).where(eq(deliveriesTable.storeId, id)).limit(1),
-  ]);
-
-  if (tasks.length > 0 || deliveries.length > 0) {
-    res.status(409).json({
-      error: "conflict",
-      message: "This store has task or delivery history and cannot be deleted.",
-    });
-    return;
-  }
+  // Cascade delete any associated deliveries and tasks first
+  await db.delete(deliveriesTable).where(eq(deliveriesTable.storeId, id));
+  await db.delete(tasksTable).where(eq(tasksTable.storeId, id));
 
   await db.delete(storesTable).where(eq(storesTable.id, id));
   res.json({ message: "Store deleted" });

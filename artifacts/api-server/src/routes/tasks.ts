@@ -167,19 +167,8 @@ router.delete("/:id", requireRole("admin"), async (req, res) => {
     return;
   }
 
-  const deliveries = await db
-    .select({ id: deliveriesTable.id })
-    .from(deliveriesTable)
-    .where(eq(deliveriesTable.taskId, id))
-    .limit(1);
-
-  if (deliveries.length > 0) {
-    res.status(409).json({
-      error: "conflict",
-      message: "This task has delivery records and cannot be deleted.",
-    });
-    return;
-  }
+  // Cascade delete any associated deliveries first
+  await db.delete(deliveriesTable).where(eq(deliveriesTable.taskId, id));
 
   await db.delete(tasksTable).where(eq(tasksTable.id, id));
   res.json({ message: "Task deleted" });
