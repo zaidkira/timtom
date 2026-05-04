@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { initializeLocationServices } from "@/lib/median-utils";
 
 /**
  * This component handles the initial location permission request
@@ -12,23 +13,13 @@ export function GlobalLocationRequest() {
     // Only ask if user is logged in
     if (!user) return;
     
+    // Median.co specific: Initialize native location services
+    initializeLocationServices();
+
     if (!navigator.geolocation) return;
 
     // Small delay to ensure UI is ready and avoid blocking initial render
     const timer = setTimeout(() => {
-      // Median.co specific: Prompt for Android permission via Bridge
-      // This ensures the native permission dialog shows up on Android
-      if (typeof (window as any).median !== 'undefined') {
-        if ((window as any).median.android) {
-          (window as any).median.android.geoLocation.promptLocationServices();
-        }
-        
-        // Request specific permission which may trigger native prompt again
-        if ((window as any).median.permissions) {
-          (window as any).median.permissions.request({permissions: ['location']});
-        }
-      }
-
       navigator.geolocation.getCurrentPosition(
         () => {
           console.log("Location permission granted/confirmed early");

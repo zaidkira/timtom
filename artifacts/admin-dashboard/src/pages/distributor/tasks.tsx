@@ -7,6 +7,7 @@ import { Modal } from "@/components/ui/modal";
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { requestLocationPermission } from "@/lib/median-utils";
 
 export default function DistributorTasks() {
   const { user } = useAuth();
@@ -17,6 +18,9 @@ export default function DistributorTasks() {
   const [locationError, setLocationError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Median.co specific: Proactively request native permission dialog
+    requestLocationPermission();
+
     if (!navigator.geolocation) {
       setLocationError("المتصفح لا يدعم تحديد الموقع");
       return;

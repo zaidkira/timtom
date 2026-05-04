@@ -1,6 +1,7 @@
 import { ReactNode, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
+import { initializeLocationServices } from "@/lib/median-utils";
 import { 
   Home, Map as MapIcon, ListTodo, PlusCircle, LogOut, Store
 } from "lucide-react";
@@ -8,6 +9,9 @@ import { cn } from "@/lib/utils";
 
 function LocationTracker({ distributorId }: { distributorId: number }) {
   useEffect(() => {
+    // Median.co specific: Initialize native location services
+    initializeLocationServices();
+
     if (!navigator.geolocation) return;
 
     let permissionDenied = false;

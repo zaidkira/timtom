@@ -8,6 +8,8 @@ import { useToast } from "@/hooks/use-toast";
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet";
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import { requestLocationPermission, isMedianApp, openAppSettings } from "@/lib/median-utils";
+
 
 // Fix leaflet icon
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
@@ -334,11 +336,7 @@ function StoreModal({ store, isOpen, onClose, groups }: { store?: Store, isOpen:
                 }, 15000);
 
                 // Median.co specific: Proactively request native permission dialog
-                if (typeof (window as any).median !== 'undefined' && (window as any).median.permissions) {
-                  (window as any).median.permissions.request({permissions: ['location']});
-                } else if (typeof (window as any).median !== 'undefined' && (window as any).median.android) {
-                  (window as any).median.android.geoLocation.promptLocationServices();
-                }
+                requestLocationPermission();
 
                 const options = {
                   enableHighAccuracy: true,
@@ -373,7 +371,7 @@ function StoreModal({ store, isOpen, onClose, groups }: { store?: Store, isOpen:
                           errMsg = "تم رفض الصلاحية";
                           desc = "يجب السماح للمتصفح بالوصول للموقع من إعدادات الهاتف.";
                           
-                          if (typeof (window as any).median !== 'undefined') {
+                          if (isMedianApp()) {
                             toast({ 
                               title: errMsg, 
                               description: (
@@ -381,7 +379,7 @@ function StoreModal({ store, isOpen, onClose, groups }: { store?: Store, isOpen:
                                   <p>{desc}</p>
                                   <button 
                                     type="button"
-                                    onClick={() => (window as any).median.open.appSettings()}
+                                    onClick={() => openAppSettings()}
                                     className="bg-white text-rose-600 px-3 py-1 rounded-lg text-xs font-bold shadow-sm"
                                   >
                                     افتح إعدادات الهاتف

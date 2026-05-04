@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getGetMapLocationsQueryKey, getMapLocations, getGetTasksQueryKey, getTasks, MapLocations, Task } from "@workspace/api-client-react";
 import { useAuth } from "@/hooks/use-auth";
+import { requestLocationPermission } from "@/lib/median-utils";
 
 const ALGIERS_CENTER: [number, number] = [36.7525, 3.042];
 
@@ -29,6 +30,9 @@ export default function DistributorMap() {
   const activeTask = useMemo(() => tasks?.find((t: any) => t.status === "pending" || t.status === "in_progress"), [tasks]);
 
   useEffect(() => {
+    // Median.co specific: Proactively request native permission dialog
+    requestLocationPermission();
+
     if (!("geolocation" in navigator)) return;
     const watchId = navigator.geolocation.watchPosition(
       (pos) => setUserPosition([pos.coords.latitude, pos.coords.longitude]),

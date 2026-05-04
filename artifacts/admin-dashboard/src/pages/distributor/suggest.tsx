@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useCreateStoreSuggestion } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
@@ -6,7 +6,7 @@ import { Store, User, MapPin, Phone, Camera } from "lucide-react";
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet";
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import { useEffect } from "react";
+import { requestLocationPermission } from "@/lib/median-utils";
 
 // Fix leaflet icon
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
@@ -76,11 +76,7 @@ export default function SuggestStore() {
     }, 15000);
 
     // Median.co specific: Proactively request native permission dialog
-    if (typeof (window as any).median !== 'undefined' && (window as any).median.permissions) {
-      (window as any).median.permissions.request({permissions: ['location']});
-    } else if (typeof (window as any).median !== 'undefined' && (window as any).median.android) {
-      (window as any).median.android.geoLocation.promptLocationServices();
-    }
+    requestLocationPermission();
 
     const options = {
       enableHighAccuracy: true,
