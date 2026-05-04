@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db, deliveriesTable, storesTable, tasksTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { requireRole } from "../middlewares/auth";
 
 const router: IRouter = Router();
@@ -69,6 +69,24 @@ router.delete("/:id", requireRole("admin"), async (req, res) => {
 
   await db.delete(storesTable).where(eq(storesTable.id, id));
   res.json({ message: "Store deleted" });
+});
+
+router.delete("/", requireRole("admin"), async (req, res) => {
+  const { storeIds } = req.body || {};
+
+  if (Array.isArray(storeIds) && storeIds.length > 0) {
+    // Delete specific stores
+    await db.delete(deliveriesTable).where(inArray(deliveriesTable.storeId, storeIds));
+    await db.delete(tasksTable).where(inArray(tasksTable.storeId, storeIds));
+    await db.delete(storesTable).where(inArray(storesTable.id, storeIds));
+    res.json({ message: "Selected stores deleted" });
+  } else {
+    // Delete ALL stores
+    await db.delete(deliveriesTable);
+    await db.delete(tasksTable);
+    await db.delete(storesTable);
+    res.json({ message: "All stores deleted" });
+  }
 });
 
 export default router;

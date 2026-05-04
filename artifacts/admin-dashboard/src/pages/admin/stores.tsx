@@ -33,6 +33,27 @@ export default function Stores() {
   const { toast } = useToast();
   const deleteStoreMutation = useDeleteStore();
 
+  const deleteAllStoresMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch(`/api/stores`, { 
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include"
+      });
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        throw new Error(body?.message || "Failed to delete stores");
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/stores"] });
+      toast({ title: "تم حذف جميع المحلات بنجاح" });
+    },
+    onError: (error: any) => {
+      toast({ title: error?.message || "Failed to delete stores", variant: "destructive" });
+    },
+  });
+
   const handleDeleteStore = (store: Store) => {
     const confirmed = window.confirm(`Delete store "${store.name}"? This cannot be undone.`);
     if (!confirmed) return;
@@ -62,7 +83,19 @@ export default function Stores() {
           <h1 className="text-2xl font-display font-bold">إدارة المحلات</h1>
           <p className="text-slate-500 text-sm sm:text-base">سجل المحلات التجارية ومواقعها وديونها</p>
         </div>
-        <div className="flex items-center gap-3 w-full sm:w-auto">
+        <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+          <button 
+            onClick={() => {
+              if (window.confirm("هل أنت متأكد من حذف جميع المحلات نهائياً؟ سيتم حذف جميع المهام والتوصيلات المرتبطة بها! هذا الإجراء لا يمكن التراجع عنه.")) {
+                deleteAllStoresMutation.mutate(undefined);
+              }
+            }}
+            disabled={deleteAllStoresMutation.isPending || !stores?.length}
+            className="flex-1 sm:flex-none bg-rose-100 text-rose-600 px-4 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-rose-200 transition-all"
+          >
+            <Trash2 className="w-5 h-5" />
+            حذف الكل
+          </button>
           <button 
             onClick={() => setIsGroupsOpen(true)}
             className="flex-1 sm:flex-none bg-slate-100 text-slate-700 px-4 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-slate-200 transition-all"
