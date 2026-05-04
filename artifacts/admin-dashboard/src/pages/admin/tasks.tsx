@@ -97,7 +97,7 @@ export default function Tasks() {
           <button 
             onClick={() => {
               if (window.confirm("هل أنت متأكد من حذف جميع المهام نهائياً؟ هذا الإجراء لا يمكن التراجع عنه.")) {
-                deleteAllTasksMutation.mutate();
+                deleteAllTasksMutation.mutate(undefined);
               }
             }}
             disabled={deleteAllTasksMutation.isPending || !tasks?.length}
