@@ -34,7 +34,41 @@ export default function Tasks() {
     },
   });
 
+  const deleteAllTasksMutation = useMutation({
+    mutationFn: async (taskIds?: number[]) => {
+      const response = await fetch(`/api/tasks`, { 
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ taskIds }),
+        credentials: "include"
+      });
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        throw new Error(body?.message || "Failed to delete tasks");
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+      toast({ title: "تم حذف المهام بنجاح" });
+    },
+    onError: (error: any) => {
+      toast({ title: error?.message || "Failed to delete tasks", variant: "destructive" });
+    },
+  });
+
   if (isLoading) return <div className="p-8 text-center">جاري التحميل...</div>;
+
+  // Group tasks by day
+  const groupedTasks = (tasks || []).reduce((acc: any, task: any) => {
+    const dateStr = task.createdAt 
+      ? new Date(task.createdAt).toLocaleDateString('ar-DZ', { year: 'numeric', month: 'long', day: 'numeric' }) 
+      : 'غير محدد';
+    if (!acc[dateStr]) acc[dateStr] = [];
+    acc[dateStr].push(task);
+    return acc;
+  }, {});
 
   const statusColors = {
     pending: "warning",
@@ -59,17 +93,53 @@ export default function Tasks() {
           <h1 className="text-2xl font-display font-bold">إدارة المهام</h1>
           <p className="text-slate-500 text-sm sm:text-base">تعيين ومتابعة مهام التوصيل للموزعين</p>
         </div>
-        <button 
-          onClick={() => setIsCreateOpen(true)}
-          className="w-full sm:w-auto bg-primary text-white px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-primary/90 shadow-lg shadow-primary/25 hover:-translate-y-0.5 transition-all"
-        >
-          <Plus className="w-5 h-5" />
-          إنشاء مهمة
-        </button>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <button 
+            onClick={() => {
+              if (window.confirm("هل أنت متأكد من حذف جميع المهام نهائياً؟ هذا الإجراء لا يمكن التراجع عنه.")) {
+                deleteAllTasksMutation.mutate();
+              }
+            }}
+            disabled={deleteAllTasksMutation.isPending || !tasks?.length}
+            className="flex-1 sm:flex-none bg-rose-100 text-rose-600 px-4 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-rose-200 transition-all"
+          >
+            <Trash2 className="w-5 h-5" />
+            حذف الكل
+          </button>
+          <button 
+            onClick={() => setIsCreateOpen(true)}
+            className="flex-1 sm:flex-none bg-primary text-white px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-primary/90 shadow-lg shadow-primary/25 hover:-translate-y-0.5 transition-all"
+          >
+            <Plus className="w-5 h-5" />
+            إنشاء مهمة
+          </button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {tasks?.map((task) => (
+      <div className="space-y-8">
+        {Object.entries(groupedTasks).map(([date, dayTasks]: [string, any]) => (
+          <div key={date} className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                <span className="w-2 h-8 bg-primary rounded-full block"></span>
+                مهام يوم: {date}
+              </h2>
+              <button
+                onClick={() => {
+                  if (window.confirm(`هل أنت متأكد من حذف جميع مهام يوم ${date}؟`)) {
+                    deleteAllTasksMutation.mutate(dayTasks.map((t: any) => t.id));
+                  }
+                }}
+                disabled={deleteAllTasksMutation.isPending}
+                className="text-sm font-bold text-rose-500 hover:text-rose-700 hover:bg-rose-50 px-3 py-1 rounded-lg transition-colors flex items-center gap-1"
+              >
+                <Trash2 className="w-4 h-4" />
+                حذف مهام هذا اليوم
+              </button>
+            </div>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {dayTasks.map((task: any) => (
           <div key={task.id} className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col">
             <div className="flex justify-between items-start mb-4 pb-4 border-b border-slate-100">
               <div className="flex items-center gap-3">
@@ -130,7 +200,13 @@ export default function Tasks() {
               </div>
             </div>
           </div>
+              ))}
+            </div>
+          </div>
         ))}
+        {tasks?.length === 0 && (
+          <div className="text-center p-10 text-slate-500 font-bold bg-white rounded-2xl border border-slate-100">لا توجد مهام حالياً.</div>
+        )}
       </div>
 
       {isCreateOpen && <CreateTaskModal onClose={() => setIsCreateOpen(false)} />}
